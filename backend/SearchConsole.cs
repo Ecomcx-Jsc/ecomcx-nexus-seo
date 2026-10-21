@@ -9,6 +9,7 @@ using Cms.Plugin.Sdk.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 
+using Cms.Plugin.Sdk.Localization;
 namespace EcomcxSeo;
 
 /// <summary>
@@ -106,7 +107,7 @@ public static class SearchConsole
             using var res = await client.SendAsync(req, ct);
             var body = await res.Content.ReadFromJsonAsync<JsonNode>(ct);
             if (!res.IsSuccessStatusCode)
-                return Results.Json(new { title = "Search Console từ chối yêu cầu", errors = new { google = new[] { body?["error"]?["message"]?.ToString() ?? $"HTTP {(int)res.StatusCode}" } } }, statusCode: 502);
+                return Results.Json(new { title = Text.T("ecomcx-seo:searchConsole.search_console_rejected_the_request"), errors = new { google = new[] { body?["error"]?["message"]?.ToString() ?? $"HTTP {(int)res.StatusCode}" } } }, statusCode: 502);
             var rows = (body?["rows"] as JsonArray)?.Where(x => x is not null).Select(x => x!).ToList() ?? [];
             var data = shape(rows);
             data["range"] = new JsonObject { ["start"] = range.Start, ["end"] = range.End };
@@ -115,7 +116,7 @@ public static class SearchConsole
         }
         catch (Exception e) when (e is HttpRequestException or TaskCanceledException or CryptographicException or JsonException)
         {
-            return Results.Json(new { title = "Không kết nối hoặc xác thực được với Google", errors = new { google = new[] { e.Message } } }, statusCode: 502);
+            return Results.Json(new { title = Text.T("ecomcx-seo:searchConsole.couldn_t_connect_to_or"), errors = new { google = new[] { e.Message } } }, statusCode: 502);
         }
     }
 
@@ -124,7 +125,7 @@ public static class SearchConsole
         var s = await SeoSettings.LoadAsync(options, ct);
         var raw = SeoSettings.Str(s["analytics"]?["serviceAccount"]);
         var property = SeoSettings.Str(s["analytics"]?["searchConsoleProperty"]).Trim();
-        if (raw.Length == 0 || property.Length == 0) return (null, null, "Chưa kết nối Search Console (SEO › Cài đặt › Phân tích)");
+        if (raw.Length == 0 || property.Length == 0) return (null, null, Text.T("ecomcx-seo:searchConsole.search_console_is_not_connected"));
         try
         {
             var j = JsonNode.Parse(raw)!;
@@ -132,10 +133,10 @@ public static class SearchConsole
             // Khoá phải đọc được; token_uri chỉ được trỏ tới Google (không để cấu hình gửi khoá đi nơi khác)
             using (var rsa = System.Security.Cryptography.RSA.Create()) rsa.ImportFromPem(acc.PrivateKey);
             if (!Uri.TryCreate(acc.TokenUri, UriKind.Absolute, out var tu) || tu.Scheme != "https" || !tu.Host.EndsWith(".googleapis.com", StringComparison.OrdinalIgnoreCase))
-                return (null, property, "Khoá JSON của tài khoản dịch vụ không hợp lệ");
+                return (null, property, Text.T("ecomcx-seo:searchConsole.the_service_account_json_key"));
             return (acc, property, null);
         }
-        catch { return (null, property, "Khoá JSON của tài khoản dịch vụ không hợp lệ"); }
+        catch { return (null, property, Text.T("ecomcx-seo:searchConsole.the_service_account_json_key")); }
     }
 
     /// <summary>Đổi JWT ký bằng khoá riêng của service account lấy access token (cache tới khi gần hết hạn).</summary>

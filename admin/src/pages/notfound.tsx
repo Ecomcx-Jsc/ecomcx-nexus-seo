@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { __, Badge, Button, Card, Checkbox, EmptyState, Field, Input, Modal, PageHeader, Select, api, can, notify, useApi } from "@cms/admin-sdk";
+import { Badge, Button, Card, Checkbox, EmptyState, Field, Input, Modal, PageHeader, Select, api, can, notify, useApi } from "@cms/admin-sdk";
 import { API, Hint, Icon, Loading } from "../ui";
 import { TYPES, errorText } from "./redirects";
+import { t } from "../i18n";
 
 interface Row { id: number; uri: string; hits: number; referer?: string | null; userAgent?: string | null; ip?: string | null; firstSeen: string; lastSeen: string }
 interface ListResult { items: Row[]; total: number; hits: number; today: number; page: number; totalPages: number }
@@ -24,12 +25,12 @@ export function NotFoundPage() {
   const canRedirect = can("ecx_seo_redirects");
 
   async function remove(ids: number[]) {
-    if (!confirm(__("Xoá {0} dòng đã chọn?", ids.length))) return;
+    if (!confirm(t("notfound.delete_selected_rows", { count: ids.length }))) return;
     await api.post(`${API}/404/delete`, { action: "delete", ids });
     setSelected([]); reload();
   }
   async function clear() {
-    if (!confirm(__("Xoá toàn bộ nhật ký 404?"))) return;
+    if (!confirm(t("notfound.clear_the_entire_404_log"))) return;
     await api.post(`${API}/404/clear`); setSelected([]); reload();
   }
   async function createRedirect() {
@@ -37,47 +38,47 @@ export function NotFoundPage() {
     setBusy(true);
     try {
       const r = await api.post<{ id: number; sources: number }>(`${API}/404/redirect`, { ids: redirectFor, target: target.trim(), type: Number(type) });
-      notify.success(__("Đã tạo chuyển hướng cho {0} URL", r.sources));
+      notify.success(t("notfound.created_a_redirect_for_urls", { sources: r.sources }));
       setRedirectFor(null); setTarget(""); setSelected([]); reload();
     } catch (e) { notify.error(errorText(e)); } finally { setBusy(false); }
   }
 
   return (
     <>
-      <PageHeader title={__("Theo dõi 404")} description={__("Đường dẫn người đọc hoặc máy tìm kiếm truy cập nhưng không tồn tại. Sửa liên kết hỏng hoặc chuyển hướng tới trang phù hợp.")}
-        actions={items.length > 0 ? <Button variant="danger" onClick={clear}>{__("Xoá toàn bộ")}</Button> : undefined} />
-      {settings && settings.modules?.monitor404 === false && <Hint tone="warn">{__("Module Theo dõi 404 đang tắt — bật lại ở Bảng điều khiển SEO để ghi nhận lỗi mới.")}</Hint>}
+      <PageHeader title={t("notfound.404_monitor")} description={t("notfound.paths_that_visitors_or_search")}
+        actions={items.length > 0 ? <Button variant="danger" onClick={clear}>{t("notfound.clear_all")}</Button> : undefined} />
+      {settings && settings.modules?.monitor404 === false && <Hint tone="warn">{t("notfound.the_404_monitor_module_is")}</Hint>}
       {data && (
         <div className="ecx-grid-3" style={{ marginBottom: 16 }}>
-          <div className="ecx-stat"><div className="ecx-stat-label">{__("URL lỗi")}</div><div className="ecx-stat-value">{data.total.toLocaleString()}</div></div>
-          <div className="ecx-stat"><div className="ecx-stat-label">{__("Tổng lượt truy cập")}</div><div className="ecx-stat-value">{data.hits.toLocaleString()}</div></div>
-          <div className="ecx-stat"><div className="ecx-stat-label">{__("Có lượt mới trong 24 giờ")}</div><div className="ecx-stat-value">{data.today.toLocaleString()}</div></div>
+          <div className="ecx-stat"><div className="ecx-stat-label">{t("notfound.broken_urls")}</div><div className="ecx-stat-value">{data.total.toLocaleString()}</div></div>
+          <div className="ecx-stat"><div className="ecx-stat-label">{t("notfound.total_hits")}</div><div className="ecx-stat-value">{data.hits.toLocaleString()}</div></div>
+          <div className="ecx-stat"><div className="ecx-stat-label">{t("notfound.hit_in_the_last_24")}</div><div className="ecx-stat-value">{data.today.toLocaleString()}</div></div>
         </div>
       )}
       <Card>
         <div className="ecx-flex" style={{ marginBottom: 12, flexWrap: "wrap" }}>
           <Select style={{ width: 200 }} value={sort} onChange={(e) => { setSort(e.target.value); setPage(1); }}
-            options={[{ value: "recent", label: __("Mới nhất") }, { value: "hits", label: __("Nhiều lượt nhất") }]} />
+            options={[{ value: "recent", label: t("notfound.most_recent") }, { value: "hits", label: t("notfound.most_hits") }]} />
           <span className="ecx-spacer" />
-          <Input style={{ width: 240 }} value={search} placeholder={__("Tìm URL hoặc trang dẫn tới…")} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { setQ(search); setPage(1); } }} />
+          <Input style={{ width: 240 }} value={search} placeholder={t("notfound.search_url_or_referrer")} onChange={(e) => setSearch(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") { setQ(search); setPage(1); } }} />
         </div>
         {selected.length > 0 && (
           <div className="ecx-flex" style={{ marginBottom: 10 }}>
-            <span className="ecx-muted">{__("Đã chọn {0}", selected.length)}</span>
-            {canRedirect && <Button size="sm" variant="secondary" onClick={() => setRedirectFor(selected)}>{__("Chuyển hướng")}</Button>}
-            <Button size="sm" variant="danger" onClick={() => remove(selected)}>{__("Xoá")}</Button>
+            <span className="ecx-muted">{t("notfound.selected", { count: selected.length })}</span>
+            {canRedirect && <Button size="sm" variant="secondary" onClick={() => setRedirectFor(selected)}>{t("common.redirects")}</Button>}
+            <Button size="sm" variant="danger" onClick={() => remove(selected)}>{t("common.delete")}</Button>
           </div>
         )}
         {!data ? <Loading /> : items.length === 0 ? (
-          <EmptyState title={q ? __("Không tìm thấy") : __("Chưa ghi nhận lỗi 404 nào")} description={__("Website báo về mỗi khi có người truy cập đường dẫn không tồn tại.")} />
+          <EmptyState title={q ? t("notfound.nothing_found") : t("notfound.no_404_errors_logged_yet")} description={t("notfound.the_website_reports_every_visit")} />
         ) : (
           <div style={{ overflowX: "auto" }}>
             <table className="ecx-table">
               <thead><tr>
                 <th style={{ width: 32 }}><Checkbox checked={all} onChange={(v) => setSelected(v ? items.map((r) => r.id) : [])} /></th>
-                <th>URL</th><th>{__("Trang dẫn tới")}</th>
-                {advanced && <th>{__("Trình duyệt / IP")}</th>}
-                <th className="num" style={{ width: 80 }}>{__("Lượt")}</th><th style={{ width: 160 }}>{__("Lần cuối")}</th><th style={{ width: 120 }} />
+                <th>URL</th><th>{t("notfound.referrer")}</th>
+                {advanced && <th>{t("notfound.browser_ip")}</th>}
+                <th className="num" style={{ width: 80 }}>{t("notfound.hits")}</th><th style={{ width: 160 }}>{t("notfound.last_hit")}</th><th style={{ width: 120 }} />
               </tr></thead>
               <tbody>
                 {items.map((r) => (
@@ -89,8 +90,8 @@ export function NotFoundPage() {
                     <td className="num">{r.hits.toLocaleString()}</td>
                     <td className="ecx-muted">{new Date(r.lastSeen).toLocaleString()}</td>
                     <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                      {canRedirect && <Button size="sm" variant="ghost" onClick={() => setRedirectFor([r.id])}>{__("Chuyển hướng")}</Button>}
-                      <Button size="sm" variant="ghost" onClick={() => remove([r.id])} aria-label={__("Xoá")}>{Icon.trash(14)}</Button>
+                      {canRedirect && <Button size="sm" variant="ghost" onClick={() => setRedirectFor([r.id])}>{t("common.redirects")}</Button>}
+                      <Button size="sm" variant="ghost" onClick={() => remove([r.id])} aria-label={t("common.delete")}>{Icon.trash(14)}</Button>
                     </td>
                   </tr>
                 ))}
@@ -101,20 +102,20 @@ export function NotFoundPage() {
         {data && data.totalPages > 1 && (
           <div className="ecx-flex" style={{ marginTop: 12, justifyContent: "flex-end" }}>
             <Button size="sm" variant="secondary" disabled={page <= 1} onClick={() => setPage(page - 1)}>‹</Button>
-            <span className="ecx-muted">{__("Trang {0}/{1}", page, data.totalPages)}</span>
+            <span className="ecx-muted">{t("common.page", { page, totalPages: data.totalPages })}</span>
             <Button size="sm" variant="secondary" disabled={page >= data.totalPages} onClick={() => setPage(page + 1)}>›</Button>
           </div>
         )}
       </Card>
 
-      <Modal open={!!redirectFor} title={__("Chuyển hướng {0} URL", redirectFor?.length ?? 0)} onClose={() => setRedirectFor(null)} width={560}
-        footer={<><Button variant="secondary" onClick={() => setRedirectFor(null)}>{__("Huỷ")}</Button><Button variant="primary" loading={busy} onClick={createRedirect}>{__("Tạo chuyển hướng")}</Button></>}>
+      <Modal open={!!redirectFor} title={t("notfound.redirect_urls", { value: redirectFor?.length ?? 0 })} onClose={() => setRedirectFor(null)} width={560}
+        footer={<><Button variant="secondary" onClick={() => setRedirectFor(null)}>{t("common.cancel")}</Button><Button variant="primary" loading={busy} onClick={createRedirect}>{t("notfound.create_redirect")}</Button></>}>
         <div className="ecx-grid">
-          <Field label={__("Kiểu chuyển hướng")}><Select value={type} onChange={(e) => setType(e.target.value)} options={TYPES.map((t) => ({ ...t, label: __(t.label) }))} /></Field>
+          <Field label={t("notfound.redirect_type")}><Select value={type} onChange={(e) => setType(e.target.value)} options={TYPES.map((item) => ({ ...item, label: item.label }))} /></Field>
           {type !== "410" && type !== "451" && (
-            <Field label={__("URL đích")} help={__("Đường dẫn trong website (/bai-moi) hoặc URL đầy đủ.")}><Input value={target} placeholder="/" onChange={(e) => setTarget(e.target.value)} /></Field>
+            <Field label={t("notfound.target_url")} help={t("notfound.a_path_on_your_site")}><Input value={target} placeholder="/" onChange={(e) => setTarget(e.target.value)} /></Field>
           )}
-          <p className="ecx-muted" style={{ margin: 0 }}>{__("Các URL đã chọn sẽ được xoá khỏi danh sách 404 sau khi tạo chuyển hướng.")}</p>
+          <p className="ecx-muted" style={{ margin: 0 }}>{t("notfound.the_selected_urls_are_removed")}</p>
         </div>
       </Modal>
     </>

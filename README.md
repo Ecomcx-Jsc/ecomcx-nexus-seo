@@ -51,12 +51,14 @@ Tải gói `ecomcx-seo-<phiên bản>.zip` lên ở **Plugin › Tải plugin l�
 
 ## Phát triển
 
-Mã nguồn nằm trong thư mục `plugins/ecomcx-seo` của Ecomcx Nexus (backend tham chiếu gói `Cms.Plugin.Sdk` ở `sdk/nuget` của repo đó):
+Repo này là mã nguồn gốc. Ecomcx Nexus đi kèm một bản sao ở `plugins/ecomcx-seo` (đồng bộ từ đây khi phát hành); backend tham chiếu gói `Cms.Plugin.Sdk` ≥ 1.4.0 (feed `sdk/nuget` của Ecomcx Nexus, hoặc đặt `CMS_NUGET_FEED`):
 
 ```bash
-npx github:Ecomcx-Jsc/ecomcx-sdk pack plugins/ecomcx-seo        # build backend + admin → dist/ecomcx-seo-<phiên bản>.zip
+npx github:Ecomcx-Jsc/ecomcx-sdk validate .   # manifest + locales (cú pháp ICU, khoá/biến khớp giữa vi và en)
+npx github:Ecomcx-Jsc/ecomcx-sdk pack .       # build backend + admin → dist/ecomcx-seo-<phiên bản>.zip
+# Trong repo Ecomcx Nexus (sau khi đồng bộ bản sao):
 python3 tests/plugins/ecomcx_seo_test.py      # kiểm thử API + website
 node tests/e2e/ecomcx-seo-ui.mjs              # kiểm thử giao diện admin (vi/en)
 ```
 
-Cấu trúc: `backend/` (C#, .NET 10), `admin/src/` (React, trang quản trị + hộp SEO), `frontend/` (React Server Components cho website: meta, JSON-LD, shortcode, route), `plugin.json` (khai báo + bản dịch tiếng Anh).
+Cấu trúc: `backend/` (C#, .NET 10), `admin/src/` (React, trang quản trị + hộp SEO), `frontend/` (React Server Components cho website: meta, JSON-LD, shortcode, route), `plugin.json` (khai báo), `locales/{vi,en}.json` (bản dịch theo khoá, ICU MessageFormat — admin dùng `t()` từ `admin/src/i18n.ts`, backend dùng `Text.T("ecomcx-seo:khoá")`).

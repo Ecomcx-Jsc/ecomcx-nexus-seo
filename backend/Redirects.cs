@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
+using Cms.Plugin.Sdk.Localization;
 namespace EcomcxSeo;
 
 public sealed record RedirectSource(string Pattern, string Comparison = "exact", bool IgnoreCase = true);
@@ -101,7 +102,7 @@ public static class Redirects
                 ("src", JsonSerializer.Serialize(new[] { new { pattern = oldPath } })));
             if (exists == 0)
                 await Db.ExecAsync(conn, $"insert into {Table} (sources, target, type, is_auto, notes) values (@s::jsonb, @t, 301, true, @n)", h.CancellationToken,
-                    ("s", JsonSerializer.Serialize(new[] { new RedirectSource(oldPath) }, SeoSettings.Json)), ("t", newPath), ("n", $"Tự tạo khi đổi đường dẫn bài #{e.Post.Id}"));
+                    ("s", JsonSerializer.Serialize(new[] { new RedirectSource(oldPath) }, SeoSettings.Json)), ("t", newPath), ("n", Text.T("ecomcx-seo:redirects.created_automatically_when_post_s", new { id = e.Post.Id })));
             Invalidate();
         });
 
@@ -188,7 +189,7 @@ public static class Redirects
             r.MapPost("/redirects/import", async (ImportInput body, IDbConnectionFactory db, IHookBus hooks, CancellationToken ct) =>
             {
                 var text = body.Csv ?? "";
-                if (text.Length > 5_000_000) return Results.Json(new { title = "File quá lớn (tối đa 5MB)" }, statusCode: 413);
+                if (text.Length > 5_000_000) return Results.Json(new { title = Text.T("ecomcx-seo:redirects.file_too_large_max_5mb") }, statusCode: 413);
                 int added = 0, skipped = 0;
                 await using var conn = await db.OpenAsync(ct);
                 foreach (var line in text.Split('\n').Select(l => l.TrimEnd('\r')).Where(l => l.Length > 0))
@@ -222,23 +223,23 @@ public static class Redirects
     {
         var errors = new Dictionary<string, string[]>();
         if (input.Sources is null || input.Sources.Count == 0 || input.Sources.Any(s => string.IsNullOrWhiteSpace(s.Pattern) || s.Pattern.Length > 2000))
-            errors["sources"] = ["Nhập ít nhất một đường dẫn nguồn"];
+            errors["sources"] = [Text.T("ecomcx-seo:redirects.enter_at_least_one_source")];
         else if (input.Sources.Any(s => !ComparisonOk(s.Comparison)))
-            errors["sources"] = ["Kiểu khớp không hợp lệ"];
+            errors["sources"] = [Text.T("ecomcx-seo:redirects.invalid_match_type")];
         else
             foreach (var s in input.Sources.Where(s => s.Comparison == "regex"))
                 try { _ = new Regex(s.Pattern, RegexOptions.None, TimeSpan.FromMilliseconds(100)); }
-                catch (ArgumentException) { errors["sources"] = ["Biểu thức chính quy không hợp lệ", s.Pattern]; }
-        if (!Types.Contains(input.Type)) errors["type"] = ["Mã chuyển hướng phải là 301, 302, 307, 410 hoặc 451"];
+                catch (ArgumentException) { errors["sources"] = [Text.T("ecomcx-seo:redirects.invalid_regular_expression"), s.Pattern]; }
+        if (!Types.Contains(input.Type)) errors["type"] = [Text.T("ecomcx-seo:redirects.the_redirect_type_must_be")];
         var target = input.Target?.Trim() ?? "";
         if (input.Type is not (410 or 451))
         {
-            if (target.Length == 0) errors["target"] = ["Nhập đích chuyển hướng"];
-            else if (!target.StartsWith('/') && !Uri.TryCreate(target, UriKind.Absolute, out _)) errors["target"] = ["Đích phải là đường dẫn trong website (/bai-moi) hoặc URL đầy đủ"];
-            else if (input.Sources?.Any(s => s.Comparison == "exact" && Normalize(s.Pattern) == Normalize(target)) == true) errors["target"] = ["Nguồn và đích trùng nhau"];
+            if (target.Length == 0) errors["target"] = [Text.T("ecomcx-seo:redirects.enter_a_redirect_target")];
+            else if (!target.StartsWith('/') && !Uri.TryCreate(target, UriKind.Absolute, out _)) errors["target"] = [Text.T("ecomcx-seo:redirects.the_target_must_be_a")];
+            else if (input.Sources?.Any(s => s.Comparison == "exact" && Normalize(s.Pattern) == Normalize(target)) == true) errors["target"] = [Text.T("ecomcx-seo:redirects.source_and_target_are_the")];
         }
-        if (input.Status is not ("active" or "inactive")) errors["status"] = ["Trạng thái không hợp lệ"];
-        return errors.Count > 0 ? Results.Json(new { title = "Dữ liệu không hợp lệ", errors }, statusCode: 422) : null;
+        if (input.Status is not ("active" or "inactive")) errors["status"] = [Text.T("ecomcx-seo:redirects.invalid_status")];
+        return errors.Count > 0 ? Results.Json(new { title = Text.T("ecomcx-seo:redirects.invalid_data"), errors }, statusCode: 422) : null;
     }
 
     /// <summary>"/Bai-Viet/?x" → "/bai-viet" (bỏ query, dấu "/" cuối; giữ nguyên chữ hoa/thường để so sánh có tuỳ chọn).</summary>

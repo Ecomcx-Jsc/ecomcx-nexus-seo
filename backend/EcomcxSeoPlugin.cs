@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
+using Cms.Plugin.Sdk.Localization;
 namespace EcomcxSeo;
 
 /// <summary>Quyền của Ecomcx SEO (gán sẵn cho vai trò; đổi ở Thành viên › Vai trò).</summary>
@@ -50,16 +51,16 @@ public sealed class EcomcxSeoPlugin : CmsPlugin
         ctx.Capabilities.Add(Caps.Edit, "administrator", "editor", "author");
 
         ctx.Admin.AddMenu(new AdminMenuItem("ecx-seo", "SEO", "/ecx-seo", Caps.Edit, "search", 68));
-        ctx.Admin.AddMenu(new AdminMenuItem("ecx-seo-dashboard", "Bảng điều khiển", "/ecx-seo", Caps.Edit, "search", 1, "ecx-seo"));
-        ctx.Admin.AddMenu(new AdminMenuItem("ecx-seo-titles", "Tiêu đề & Meta", "/ecx-seo/titles", Caps.Settings, "search", 2, "ecx-seo"));
-        ctx.Admin.AddMenu(new AdminMenuItem("ecx-seo-settings", "Cài đặt chung", "/ecx-seo/settings", Caps.Settings, "search", 3, "ecx-seo"));
+        ctx.Admin.AddMenu(new AdminMenuItem("ecx-seo-dashboard", Text.T("ecomcx-seo:plugin.dashboard"), "/ecx-seo", Caps.Edit, "search", 1, "ecx-seo"));
+        ctx.Admin.AddMenu(new AdminMenuItem("ecx-seo-titles", Text.T("ecomcx-seo:plugin.titles_meta"), "/ecx-seo/titles", Caps.Settings, "search", 2, "ecx-seo"));
+        ctx.Admin.AddMenu(new AdminMenuItem("ecx-seo-settings", Text.T("ecomcx-seo:plugin.general_settings"), "/ecx-seo/settings", Caps.Settings, "search", 3, "ecx-seo"));
         ctx.Admin.AddMenu(new AdminMenuItem("ecx-seo-sitemap", "Sitemap", "/ecx-seo/sitemap", Caps.Settings, "search", 4, "ecx-seo"));
         ctx.Admin.AddMenu(new AdminMenuItem("ecx-seo-schema", "Schema", "/ecx-seo/schema", Caps.Settings, "search", 5, "ecx-seo"));
-        ctx.Admin.AddMenu(new AdminMenuItem("ecx-seo-redirects", "Chuyển hướng", "/ecx-seo/redirects", Caps.Redirects, "search", 6, "ecx-seo"));
-        ctx.Admin.AddMenu(new AdminMenuItem("ecx-seo-404", "Theo dõi 404", "/ecx-seo/404", Caps.Monitor404, "search", 7, "ecx-seo"));
-        ctx.Admin.AddMenu(new AdminMenuItem("ecx-seo-analysis", "Phân tích", "/ecx-seo/analysis", Caps.Analysis, "search", 8, "ecx-seo"));
-        ctx.Admin.AddMenu(new AdminMenuItem("ecx-seo-bulk", "Sửa hàng loạt", "/ecx-seo/bulk", Caps.Edit, "search", 9, "ecx-seo"));
-        ctx.Admin.AddMenu(new AdminMenuItem("ecx-seo-tools", "Công cụ", "/ecx-seo/tools", Caps.Settings, "search", 10, "ecx-seo"));
+        ctx.Admin.AddMenu(new AdminMenuItem("ecx-seo-redirects", Text.T("ecomcx-seo:plugin.redirects"), "/ecx-seo/redirects", Caps.Redirects, "search", 6, "ecx-seo"));
+        ctx.Admin.AddMenu(new AdminMenuItem("ecx-seo-404", Text.T("ecomcx-seo:plugin.404_monitor"), "/ecx-seo/404", Caps.Monitor404, "search", 7, "ecx-seo"));
+        ctx.Admin.AddMenu(new AdminMenuItem("ecx-seo-analysis", Text.T("ecomcx-seo:plugin.analysis"), "/ecx-seo/analysis", Caps.Analysis, "search", 8, "ecx-seo"));
+        ctx.Admin.AddMenu(new AdminMenuItem("ecx-seo-bulk", Text.T("ecomcx-seo:plugin.bulk_edit"), "/ecx-seo/bulk", Caps.Edit, "search", 9, "ecx-seo"));
+        ctx.Admin.AddMenu(new AdminMenuItem("ecx-seo-tools", Text.T("ecomcx-seo:plugin.tools"), "/ecx-seo/tools", Caps.Settings, "search", 10, "ecx-seo"));
 
         SeoMeta.Register(ctx);
         Redirects.Register(ctx);
@@ -92,7 +93,7 @@ public sealed class EcomcxSeoPlugin : CmsPlugin
 
             r.MapPost("/settings/import", async (JsonObject input, IOptionStore options, IHookBus hooks, CancellationToken ct) =>
             {
-                if (input["settings"] is not JsonObject incoming) return Results.Json(new { title = "File không đúng định dạng cài đặt Ecomcx SEO" }, statusCode: 422);
+                if (input["settings"] is not JsonObject incoming) return Results.Json(new { title = Text.T("ecomcx-seo:plugin.this_file_is_not_an") }, statusCode: 422);
                 var current = await SeoSettings.LoadAsync(options, ct);
                 // Giữ secret và khoá IndexNow của website này
                 incoming.Remove("analytics");
@@ -152,7 +153,7 @@ public sealed class EcomcxSeoPlugin : CmsPlugin
                     insert into {Redirects.Table} (sources, target, type, hits, is_auto, notes, created_at, last_accessed_at)
                     select jsonb_build_array(jsonb_build_object('pattern', o.source, 'comparison', 'exact', 'ignoreCase', true)),
                            o.target, case when o.status_code in (301, 302, 307, 410, 451) then o.status_code else 301 end,
-                           o.hits, o.is_auto, 'Chuyển từ plugin Chuyển hướng', o.created_at, o.last_hit_at
+                           o.hits, o.is_auto, '⟦ecomcx-seo:redirects.imported_from_redirects_plugin⟧', o.created_at, o.last_hit_at
                     from plugin_redirects o where {LegacyRedirectWhere}
                     """, ct);
                 await Redirects.ChangedAsync(hooks, ct);

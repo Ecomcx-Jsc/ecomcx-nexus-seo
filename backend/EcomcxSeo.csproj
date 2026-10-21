@@ -10,7 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="Cms.Plugin.Sdk" Version="1.1.0">
+    <PackageReference Include="Cms.Plugin.Sdk" Version="1.4.0">
       <Private>false</Private>
       <ExcludeAssets>runtime</ExcludeAssets>
     </PackageReference>

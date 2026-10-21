@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
+using Cms.Plugin.Sdk.Localization;
 namespace EcomcxSeo;
 
 public sealed record SubmitInput(List<string> Urls);
@@ -70,10 +71,10 @@ public static class IndexNow
             {
                 var site = await SiteUrlAsync(options, ct);
                 var urls = input.Urls.Select(u => u.Trim()).Where(u => u.Length > 0).Select(u => u.StartsWith('/') ? site + u : u).Distinct().Take(10_000).ToList();
-                if (urls.Count == 0) return Results.Json(new { title = "Nhập ít nhất một URL" }, statusCode: 422);
+                if (urls.Count == 0) return Results.Json(new { title = Text.T("ecomcx-seo:indexNow.enter_at_least_one_url") }, statusCode: 422);
                 var host = Uri.TryCreate(site, UriKind.Absolute, out var su) ? su.Host : "";
                 if (urls.Any(u => !Uri.TryCreate(u, UriKind.Absolute, out var x) || x.Host != host))
-                    return Results.Json(new { title = "Chỉ gửi được URL thuộc website này" }, statusCode: 422);
+                    return Results.Json(new { title = Text.T("ecomcx-seo:indexNow.only_urls_of_this_website") }, statusCode: 422);
                 var (status, message) = await SendAsync(http, options, urls, ct);
                 await LogAsync(db, urls, status, message, "manual", ct);
                 return Results.Ok(new { status, message });
@@ -90,7 +91,7 @@ public static class IndexNow
     }
 
     public const string JobType = "ecomcx-seo:indexnow";
-    private const string ConnectFailed = "Không kết nối được IndexNow";
+    private static readonly string ConnectFailed = Text.T("ecomcx-seo:indexNow.couldn_t_connect_to_indexnow");
     public sealed record IndexNowJob(string Link);
 
     /// <summary>
@@ -117,14 +118,14 @@ public static class IndexNow
             await LogAsync(sp.GetRequiredService<IDbConnectionFactory>(), [url], status, message, "auto", jc.CancellationToken);
             // Máy tìm kiếm bận / lỗi máy chủ / mất kết nối → để hàng đợi thử lại (khoá sai, URL sai thì không thử lại)
             if (status == 429 || status >= 500 || message == ConnectFailed) throw new InvalidOperationException(message);
-        }, new JobTypeOptions { MaxAttempts = 5, RetryDelay = TimeSpan.FromMinutes(1), Timeout = TimeSpan.FromSeconds(30), Label = "Gửi URL tới IndexNow" });
+        }, new JobTypeOptions { MaxAttempts = 5, RetryDelay = TimeSpan.FromMinutes(1), Timeout = TimeSpan.FromSeconds(30), Label = Text.T("ecomcx-seo:indexNow.submit_urls_to_indexnow") });
 
     private static async Task<(int Status, string Message)> SendAsync(IHttpClientFactory http, IOptionStore options, List<string> urls, CancellationToken ct)
     {
         var site = await SiteUrlAsync(options, ct);
-        if (!Uri.TryCreate(site, UriKind.Absolute, out var u)) return (0, "Địa chỉ website (Cài đặt › Tổng quan) chưa hợp lệ");
+        if (!Uri.TryCreate(site, UriKind.Absolute, out var u)) return (0, Text.T("ecomcx-seo:indexNow.the_site_address_settings_general"));
         if (u.IsLoopback || u.Host.EndsWith(".local") || u.Host.EndsWith(".localhost"))
-            return (0, "Bỏ qua: website đang chạy ở máy cục bộ, máy tìm kiếm không truy cập được");
+            return (0, Text.T("ecomcx-seo:indexNow.skipped_the_site_runs_on"));
         var key = await EnsureKeyAsync(options, ct);
         var client = http.CreateClient("ecx-seo");
         client.Timeout = TimeSpan.FromSeconds(15);
@@ -133,12 +134,12 @@ public static class IndexNow
             var res = await client.PostAsJsonAsync(Endpoint, new { host = u.Host, key, keyLocation = site + KeyPath, urlList = urls }, ct);
             var message = (int)res.StatusCode switch
             {
-                200 => "Đã gửi, máy tìm kiếm đã nhận",
-                202 => "Đã nhận, đang chờ xác minh khoá",
-                400 => "Yêu cầu không hợp lệ",
-                403 => "Khoá không hợp lệ hoặc máy tìm kiếm không đọc được file khoá",
-                422 => "URL không thuộc website hoặc khoá không khớp",
-                429 => "Gửi quá nhiều, thử lại sau",
+                200 => Text.T("ecomcx-seo:indexNow.submitted_accepted_by_search_engines"),
+                202 => Text.T("ecomcx-seo:indexNow.received_waiting_for_key_verification"),
+                400 => Text.T("ecomcx-seo:indexNow.bad_request"),
+                403 => Text.T("ecomcx-seo:indexNow.invalid_key_or_search_engines"),
+                422 => Text.T("ecomcx-seo:indexNow.urls_don_t_belong_to"),
+                429 => Text.T("ecomcx-seo:indexNow.too_many_requests_try_again"),
                 _ => $"HTTP {(int)res.StatusCode}",
             };
             return ((int)res.StatusCode, message);
