@@ -1,6 +1,7 @@
-import { __, Card, Checkbox, Input, PageHeader, useApi } from "@cms/admin-sdk";
+import { Card, Checkbox, Input, PageHeader, useApi } from "@cms/admin-sdk";
 import { Hint, Icon, IdsInput, Loading, Row, SettingsShell, useContentTypes, useSeoSettings } from "../ui";
 import { useHashTab } from "./titles";
+import { t } from "../i18n";
 
 export function SitemapPage() {
   const st = useSeoSettings();
@@ -11,65 +12,65 @@ export function SitemapPage() {
   const site = (boot?.site.url ?? "").replace(/\/$/, "");
   const link = (path: string) => <a className="ecx-link" href={`${site}${path}`} target="_blank" rel="noreferrer">{site}{path} {Icon.external(12)}</a>;
   const tabs = [
-    { value: "general", label: __("Chung") }, { value: "types", label: __("Loại nội dung") },
-    { value: "news", label: __("Tin tức") }, { value: "video", label: __("Video") },
+    { value: "general", label: t("common.general") }, { value: "types", label: t("common.content_types") },
+    { value: "news", label: t("sitemap.news") }, { value: "video", label: t("sitemap.video") },
   ];
   const typeList = (list: string[] | undefined, key: string[]) => (
     <div className="ecx-flex">{postTypes.map((p) => (
-      <Checkbox key={p.name} checked={(list ?? []).includes(p.name)} label={__(p.label)}
+      <Checkbox key={p.name} checked={(list ?? []).includes(p.name)} label={p.label}
         onChange={(v) => st.patch(key, v ? [...(list ?? []), p.name] : (list ?? []).filter((x) => x !== p.name))} />
     ))}</div>
   );
   return (
     <>
-      <PageHeader title={__("Sitemap")} description={__("Danh sách URL giúp máy tìm kiếm tìm thấy mọi trang quan trọng của website.")} />
+      <PageHeader title={t("sitemap.sitemap")} description={t("sitemap.a_list_of_urls_that")} />
       {!s ? <Loading /> : (
         <SettingsShell tabs={tabs} tab={tab} onTab={setTab} dirty={st.dirty} saving={st.saving} onSave={st.save} onReset={st.reset}>
-          {s.modules?.sitemap === false && <Hint tone="warn">{__("Module Sitemap đang tắt — sitemap.xml dùng cấu hình mặc định của CMS.")}</Hint>}
+          {s.modules?.sitemap === false && <Hint tone="warn">{t("sitemap.the_sitemap_module_is_off")}</Hint>}
           <Card>
             {tab === "general" && (<>
-              <Row label={__("Địa chỉ sitemap")} help={__("Gửi địa chỉ này trong Google Search Console và Bing Webmaster Tools.")}>
+              <Row label={t("sitemap.sitemap_address")} help={t("sitemap.submit_this_address_in_google")}>
                 <div className="ecx-grid" style={{ gap: 4 }}>{link("/sitemap.xml")}</div>
               </Row>
-              <Row label={__("Ảnh")}><Checkbox checked={s.sitemap.includeImages} onChange={(v) => st.patch(["sitemap", "includeImages"], v)} label={__("Thêm ảnh đại diện và ảnh trong nội dung vào sitemap")} /></Row>
-              <Row label={__("Loại trừ bài")} help={__("ID bài/trang, cách nhau dấu phẩy. Bài noindex hoặc có canonical trỏ nơi khác tự bị loại.")}>
+              <Row label={t("sitemap.image")}><Checkbox checked={s.sitemap.includeImages} onChange={(v) => st.patch(["sitemap", "includeImages"], v)} label={t("sitemap.add_featured_images_and_images")} /></Row>
+              <Row label={t("sitemap.exclude_posts")} help={t("sitemap.post_page_ids_comma_separated")}>
                 <IdsInput value={s.sitemap.excludePosts} onChange={(v) => st.patch(["sitemap", "excludePosts"], v)} placeholder="12, 45" />
               </Row>
-              <Row label={__("Loại trừ chuyên mục/thẻ")} help={__("ID, cách nhau dấu phẩy.")}>
+              <Row label={t("sitemap.exclude_categories_tags")} help={t("sitemap.ids_comma_separated")}>
                 <IdsInput value={s.sitemap.excludeTerms} onChange={(v) => st.patch(["sitemap", "excludeTerms"], v)} placeholder="3, 8" />
               </Row>
             </>)}
 
             {tab === "types" && (<>
-              <Hint>{__("Loại nội dung đặt noindex ở Tiêu đề & Meta sẽ không có trong sitemap.")}</Hint>
+              <Hint>{t("sitemap.content_types_set_to_noindex")}</Hint>
               {postTypes.map((p) => (
-                <Row key={p.name} label={__(p.label)}>
-                  <Checkbox checked={s.sitemap.postTypes?.[p.name] !== false} onChange={(v) => st.patch(["sitemap", "postTypes", p.name], v)} label={__("Có trong sitemap")} />
+                <Row key={p.name} label={p.label}>
+                  <Checkbox checked={s.sitemap.postTypes?.[p.name] !== false} onChange={(v) => st.patch(["sitemap", "postTypes", p.name], v)} label={t("sitemap.included_in_sitemap")} />
                 </Row>
               ))}
-              {taxonomies.map((t) => (
-                <Row key={t.name} label={__(t.label)}>
-                  <Checkbox checked={s.sitemap.taxonomies?.[t.name] !== false} onChange={(v) => st.patch(["sitemap", "taxonomies", t.name], v)} label={__("Có trong sitemap")} />
+              {taxonomies.map((item) => (
+                <Row key={item.name} label={item.label}>
+                  <Checkbox checked={s.sitemap.taxonomies?.[item.name] !== false} onChange={(v) => st.patch(["sitemap", "taxonomies", item.name], v)} label={t("sitemap.included_in_sitemap")} />
                 </Row>
               ))}
             </>)}
 
             {tab === "news" && (<>
-              {!s.modules?.newsSitemap && <Hint tone="warn">{__("Bật module Sitemap tin tức ở Bảng điều khiển SEO để dùng.")}</Hint>}
-              <Row label={__("Địa chỉ")} help={__("Chỉ gồm bài đăng trong 2 ngày gần nhất, theo yêu cầu của Google News.")}>{link("/news-sitemap.xml")}</Row>
-              <Row label={__("Tên ấn phẩm")} help={__("Để trống = tên website. Phải trùng tên đã đăng ký với Google News.")}>
+              {!s.modules?.newsSitemap && <Hint tone="warn">{t("sitemap.turn_on_the_news_sitemap")}</Hint>}
+              <Row label={t("sitemap.address")} help={t("sitemap.only_posts_published_in_the")}>{link("/news-sitemap.xml")}</Row>
+              <Row label={t("sitemap.publication_name")} help={t("sitemap.leave_empty_site_title_must")}>
                 <Input value={s.sitemap.news.publicationName} onChange={(e) => st.patch(["sitemap", "news", "publicationName"], e.target.value)} />
               </Row>
-              <Row label={__("Loại nội dung")}>{typeList(s.sitemap.news.postTypes, ["sitemap", "news", "postTypes"])}</Row>
-              <Row label={__("Loại trừ chuyên mục")} help={__("ID chuyên mục không phải tin tức.")}>
+              <Row label={t("common.content_types")}>{typeList(s.sitemap.news.postTypes, ["sitemap", "news", "postTypes"])}</Row>
+              <Row label={t("sitemap.exclude_categories")} help={t("sitemap.ids_of_categories_that_aren")}>
                 <IdsInput value={s.sitemap.news.excludeTerms} onChange={(v) => st.patch(["sitemap", "news", "excludeTerms"], v)} />
               </Row>
             </>)}
 
             {tab === "video" && (<>
-              {!s.modules?.videoSitemap && <Hint tone="warn">{__("Bật module Sitemap & schema video ở Bảng điều khiển SEO để dùng.")}</Hint>}
-              <Row label={__("Địa chỉ")} help={__("Tự nhận diện video tải lên, YouTube và Vimeo trong nội dung bài.")}>{link("/video-sitemap.xml")}</Row>
-              <Row label={__("Loại nội dung")}>{typeList(s.sitemap.video.postTypes, ["sitemap", "video", "postTypes"])}</Row>
+              {!s.modules?.videoSitemap && <Hint tone="warn">{t("sitemap.turn_on_the_video_sitemap")}</Hint>}
+              <Row label={t("sitemap.address")} help={t("sitemap.detects_uploaded_videos_youtube_and")}>{link("/video-sitemap.xml")}</Row>
+              <Row label={t("common.content_types")}>{typeList(s.sitemap.video.postTypes, ["sitemap", "video", "postTypes"])}</Row>
             </>)}
           </Card>
         </SettingsShell>

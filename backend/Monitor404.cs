@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
+using Cms.Plugin.Sdk.Localization;
 namespace EcomcxSeo;
 
 public sealed record NotFoundRow(long Id, string Uri, long Hits, string? Referer, string? UserAgent, string? Ip, DateTimeOffset FirstSeen, DateTimeOffset LastSeen);
@@ -100,11 +101,11 @@ public static class Monitor404
                 if (uris.Count == 0) return Results.NotFound();
                 var target = input.Target?.Trim() ?? "";
                 if (input.Type is not (410 or 451) && !target.StartsWith('/') && !Uri.TryCreate(target, UriKind.Absolute, out _))
-                    return Results.Json(new { title = "Dữ liệu không hợp lệ", errors = new { target = new[] { "Đích phải là đường dẫn trong website (/bai-moi) hoặc URL đầy đủ" } } }, statusCode: 422);
+                    return Results.Json(new { title = Text.T("ecomcx-seo:monitor404.invalid_data"), errors = new { target = new[] { Text.T("ecomcx-seo:monitor404.the_target_must_be_a") } } }, statusCode: 422);
                 var sources = uris.Where(u => Redirects.Normalize(u) != Redirects.Normalize(target)).Select(u => new RedirectSource(Redirects.Normalize(u))).ToList();
-                if (sources.Count == 0) return Results.Json(new { title = "Nguồn và đích trùng nhau" }, statusCode: 422);
+                if (sources.Count == 0) return Results.Json(new { title = Text.T("ecomcx-seo:monitor404.source_and_target_are_the") }, statusCode: 422);
                 var id = await Db.ScalarAsync<long>(conn, $"insert into {Redirects.Table} (sources, target, type, notes) values (@s::jsonb, @t, @ty, @n) returning id", ct,
-                    ("s", JsonSerializer.Serialize(sources, SeoSettings.Json)), ("t", target), ("ty", input.Type), ("n", "Tạo từ Theo dõi 404"));
+                    ("s", JsonSerializer.Serialize(sources, SeoSettings.Json)), ("t", target), ("ty", input.Type), ("n", Text.T("ecomcx-seo:monitor404.created_from_404_monitor")));
                 await Db.ExecAsync(conn, $"delete from {Table} where id = any(@ids)", ct, ("ids", input.Ids.Take(500).ToArray()));
                 await Redirects.ChangedAsync(hooks, ct);
                 return Results.Ok(new { id, sources = sources.Count });

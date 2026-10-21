@@ -8,7 +8,7 @@ using Cms.Plugin.Sdk;
 using Cms.Plugin.Sdk.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-
+using Cms.Plugin.Sdk.Localization;
 namespace EcomcxSeo;
 
 /// <summary>Message là mẫu tiếng Việt có {0}, {1}… (admin dịch rồi điền Args).</summary>
@@ -32,21 +32,21 @@ public static partial class Analysis
 
                 // ---------------------------------------------------------- Cơ bản
                 var title = await Opt("site_title");
-                items.Add(new("site-title", "basic", "Tên website", title.Length >= 3 ? "pass" : "fail",
-                    title.Length >= 3 ? "Tên website: “{0}”" : "Chưa đặt tên website (Cài đặt › Tổng quan)", null, [title]));
+                items.Add(new("site-title", "basic", Text.T("ecomcx-seo:analysis.site_title"), title.Length >= 3 ? "pass" : "fail",
+                    title.Length >= 3 ? Text.T("ecomcx-seo:analysis.site_title_2") : Text.T("ecomcx-seo:analysis.no_site_title_set_settings"), null, [title]));
                 var tagline = await Opt("site_tagline");
-                items.Add(new("tagline", "basic", "Khẩu hiệu", tagline.Length > 0 ? "pass" : "warning",
-                    tagline.Length > 0 ? "Khẩu hiệu: “{0}”" : "Chưa có khẩu hiệu — dùng cho tiêu đề trang chủ và mô tả mặc định", null, [tagline]));
+                items.Add(new("tagline", "basic", Text.T("ecomcx-seo:analysis.tagline"), tagline.Length > 0 ? "pass" : "warning",
+                    tagline.Length > 0 ? Text.T("ecomcx-seo:analysis.tagline_2") : Text.T("ecomcx-seo:analysis.no_tagline_it_s_used"), null, [tagline]));
                 var indexable = (await options.GetAsync("blog_public", ct)) is not JsonValue bp || !bp.TryGetValue<bool>(out var b) || b;
-                items.Add(new("indexable", "basic", "Cho phép máy tìm kiếm", indexable ? "pass" : "fail",
-                    indexable ? "Website cho phép máy tìm kiếm index" : "Đang chặn máy tìm kiếm (Cài đặt › Đọc) — website sẽ không xuất hiện trên Google"));
+                items.Add(new("indexable", "basic", Text.T("ecomcx-seo:analysis.search_engine_visibility"), indexable ? "pass" : "fail",
+                    indexable ? Text.T("ecomcx-seo:analysis.the_site_allows_search_engines") : Text.T("ecomcx-seo:analysis.search_engines_are_discouraged_settings")));
                 var siteUrl = await IndexNow.SiteUrlAsync(options, ct);
                 var https = siteUrl.StartsWith("https://");
                 items.Add(new("https", "basic", "HTTPS", https ? "pass" : "fail",
-                    https ? "Website dùng HTTPS" : "Địa chỉ website chưa dùng HTTPS ({0}) — Google ưu tiên trang HTTPS", null, [siteUrl]));
+                    https ? Text.T("ecomcx-seo:analysis.the_site_uses_https") : Text.T("ecomcx-seo:analysis.the_site_address_doesn_t"), null, [siteUrl]));
                 var structure = await Opt("permalink_structure") is { Length: > 0 } ps ? ps : "/%postname%";
-                items.Add(new("permalink", "basic", "Đường dẫn tĩnh", structure.Contains("%postname%") ? "pass" : "warning",
-                    structure.Contains("%postname%") ? "Cấu trúc đường dẫn có tên bài ({0})" : "Cấu trúc {0} không chứa tên bài — đường dẫn khó hiểu với người đọc và máy tìm kiếm", null, [structure]));
+                items.Add(new("permalink", "basic", Text.T("ecomcx-seo:analysis.permalinks"), structure.Contains("%postname%") ? "pass" : "warning",
+                    structure.Contains("%postname%") ? Text.T("ecomcx-seo:analysis.the_permalink_structure_includes_the") : Text.T("ecomcx-seo:analysis.the_structure_doesn_t_include"), null, [structure]));
 
                 // ---------------------------------------------------------- Nội dung
                 await using var conn = await db.OpenAsync(ct);
@@ -58,53 +58,53 @@ public static partial class Analysis
                 AuditRef Ref((long Id, string Type, string Title, string Excerpt, JsonNode? Seo, string Content) p) => new(p.Id, p.Title, p.Type);
 
                 var noDesc = posts.Where(p => SeoSettings.Str(p.Seo?["description"]).Length == 0 && p.Excerpt.Trim().Length == 0).ToList();
-                items.Add(Count("meta-description", "content", "Mô tả SEO", noDesc.Select(Ref).ToList(), posts.Count,
-                    "Mọi bài đều có mô tả SEO", "{0} bài chưa có mô tả SEO hoặc tóm tắt — Google sẽ tự cắt đoạn bất kỳ"));
+                items.Add(Count("meta-description", "content", Text.T("ecomcx-seo:analysis.seo_description"), noDesc.Select(Ref).ToList(), posts.Count,
+                    Text.T("ecomcx-seo:analysis.every_post_has_an_seo"), Text.T("ecomcx-seo:analysis.posts_have_no_seo_description")));
                 var noKw = posts.Where(p => !SeoSettings.Strings(p.Seo?["focusKeywords"]).Any()).ToList();
-                items.Add(Count("focus-keyword", "content", "Từ khoá chính", noKw.Select(Ref).ToList(), posts.Count,
-                    "Mọi bài đều có từ khoá chính", "{0} bài chưa đặt từ khoá chính — chưa tối ưu được theo từ khoá", warnOnly: true));
+                items.Add(Count("focus-keyword", "content", Text.T("ecomcx-seo:analysis.focus_keyword"), noKw.Select(Ref).ToList(), posts.Count,
+                    Text.T("ecomcx-seo:analysis.every_post_has_a_focus"), Text.T("ecomcx-seo:analysis.posts_have_no_focus_keyword"), warnOnly: true));
                 var low = posts.Where(p => p.Seo?["score"] is JsonValue v && v.TryGetValue<int>(out var sc) && sc < 50).ToList();
-                items.Add(Count("low-score", "content", "Điểm SEO thấp", low.Select(Ref).ToList(), posts.Count,
-                    "Không có bài điểm SEO dưới 50", "{0} bài có điểm SEO dưới 50", warnOnly: true));
+                items.Add(Count("low-score", "content", Text.T("ecomcx-seo:analysis.low_seo_scores"), low.Select(Ref).ToList(), posts.Count,
+                    Text.T("ecomcx-seo:analysis.no_posts_score_below_50"), Text.T("ecomcx-seo:analysis.posts_score_below_50"), warnOnly: true));
                 var dupTitles = posts.GroupBy(p => (SeoSettings.Str(p.Seo?["title"]) is { Length: > 0 } t ? t : p.Title).Trim().ToLowerInvariant())
                     .Where(g => g.Key.Length > 0 && g.Count() > 1).SelectMany(g => g).ToList();
-                items.Add(Count("duplicate-titles", "content", "Tiêu đề trùng nhau", dupTitles.Select(Ref).ToList(), posts.Count,
-                    "Không có tiêu đề trùng", "{0} bài có tiêu đề SEO trùng với bài khác — máy tìm kiếm khó phân biệt"));
+                items.Add(Count("duplicate-titles", "content", Text.T("ecomcx-seo:analysis.duplicate_titles"), dupTitles.Select(Ref).ToList(), posts.Count,
+                    Text.T("ecomcx-seo:analysis.no_duplicate_titles"), Text.T("ecomcx-seo:analysis.posts_share_an_seo_title")));
                 var thin = posts.Where(p => p.Type == "post" && WordCount(p.Content) is > 0 and < 300).ToList();
-                items.Add(Count("thin-content", "content", "Nội dung quá ngắn", thin.Select(Ref).ToList(), posts.Count,
-                    "Không có bài dưới 300 từ", "{0} bài dưới 300 từ — nội dung mỏng thường xếp hạng kém", warnOnly: true));
+                items.Add(Count("thin-content", "content", Text.T("ecomcx-seo:analysis.thin_content"), thin.Select(Ref).ToList(), posts.Count,
+                    Text.T("ecomcx-seo:analysis.no_posts_under_300_words"), Text.T("ecomcx-seo:analysis.posts_have_fewer_than_300"), warnOnly: true));
                 var noindex = posts.Where(p => SeoSettings.Bool(p.Seo?["robots"]?["noindex"])).ToList();
                 if (noindex.Count > 0)
-                    items.Add(new("noindex-posts", "content", "Bài chặn index", "info", "{0} bài đang đặt noindex (cố ý ẩn khỏi máy tìm kiếm)", noindex.Select(Ref).Take(50).ToList(), [noindex.Count.ToString()]));
+                    items.Add(new("noindex-posts", "content", Text.T("ecomcx-seo:analysis.noindexed_posts"), "info", Text.T("ecomcx-seo:analysis.posts_are_set_to_noindex"), noindex.Select(Ref).Take(50).ToList(), [noindex.Count.ToString()]));
                 var noAlt = await Db.ScalarAsync<long>(conn, "select count(*) from media where mime_type like 'image/%' and coalesce(alt, '') = ''", ct);
                 var images = await Db.ScalarAsync<long>(conn, "select count(*) from media where mime_type like 'image/%'", ct);
-                items.Add(new("image-alt", "content", "Văn bản thay thế của ảnh", noAlt == 0 ? "pass" : "warning",
-                    noAlt == 0 ? "Cả {1} ảnh đều có văn bản thay thế" : "{0}/{1} ảnh chưa có văn bản thay thế (alt) — bật SEO hình ảnh để tự điền khi hiển thị", null, [noAlt.ToString(), images.ToString()]));
+                items.Add(new("image-alt", "content", Text.T("ecomcx-seo:analysis.image_alt_text"), noAlt == 0 ? "pass" : "warning",
+                    noAlt == 0 ? Text.T("ecomcx-seo:analysis.all_images_have_alt_text") : Text.T("ecomcx-seo:analysis.images_have_no_alt_text"), null, [noAlt.ToString(), images.ToString()]));
 
                 // ---------------------------------------------------------- Cấu hình SEO
                 var kgName = SeoSettings.Str(s["knowledgeGraph"]?["name"]);
-                items.Add(new("knowledge-graph", "config", "Thông tin tổ chức / cá nhân", kgName.Length > 0 && s["knowledgeGraph"]?["logo"] is JsonObject ? "pass" : "warning",
-                    kgName.Length > 0 ? "Schema tổ chức: {0}" : "Chưa khai báo tên và logo tổ chức (SEO › Schema) — Google dùng cho bảng tri thức", null, [kgName]));
+                items.Add(new("knowledge-graph", "config", Text.T("ecomcx-seo:analysis.organization_person_info"), kgName.Length > 0 && s["knowledgeGraph"]?["logo"] is JsonObject ? "pass" : "warning",
+                    kgName.Length > 0 ? Text.T("ecomcx-seo:analysis.organization_schema") : Text.T("ecomcx-seo:analysis.no_organization_name_and_logo"), null, [kgName]));
                 var google = SeoSettings.Str(s["webmaster"]?["google"]);
                 items.Add(new("search-console", "config", "Google Search Console", google.Length > 0 ? "pass" : "warning",
-                    google.Length > 0 ? "Đã khai báo mã xác minh Google" : "Chưa xác minh website với Google Search Console"));
-                items.Add(new("og-image", "config", "Ảnh chia sẻ mặc định", s["social"]?["ogImage"] is JsonObject ? "pass" : "warning",
-                    s["social"]?["ogImage"] is JsonObject ? "Đã có ảnh mặc định khi chia sẻ lên mạng xã hội" : "Chưa có ảnh chia sẻ mặc định — bài không có ảnh đại diện sẽ hiện trống trên Facebook/Zalo"));
+                    google.Length > 0 ? Text.T("ecomcx-seo:analysis.google_verification_code_is_set") : Text.T("ecomcx-seo:analysis.the_site_isn_t_verified")));
+                items.Add(new("og-image", "config", Text.T("ecomcx-seo:analysis.default_share_image"), s["social"]?["ogImage"] is JsonObject ? "pass" : "warning",
+                    s["social"]?["ogImage"] is JsonObject ? Text.T("ecomcx-seo:analysis.a_default_share_image_is") : Text.T("ecomcx-seo:analysis.no_default_share_image_posts")));
 
                 // ---------------------------------------------------------- Trang chủ (HTML thật)
                 if (Uri.TryCreate(siteUrl, UriKind.Absolute, out var home))
                 {
                     var page = await FetchAsync(http, home, allowPrivate: true, ct);
-                    if (page.Error is not null) items.Add(new("homepage", "homepage", "Trang chủ", "fail", page.Error));
+                    if (page.Error is not null) items.Add(new("homepage", "homepage", Text.T("ecomcx-seo:analysis.home"), "fail", page.Error));
                     else items.AddRange(InspectHtml(page, home).Select(i => i with { Group = "homepage" }));
                     var robots = await FetchAsync(http, new Uri(home, "/robots.txt"), allowPrivate: true, ct);
                     var blocked = robots.Html is { } rt && DisallowAll().IsMatch(rt);
                     items.Add(new("robots-txt", "basic", "robots.txt", robots.Error is null && !blocked ? "pass" : "fail",
-                        robots.Error ?? (blocked ? "robots.txt đang chặn toàn bộ website" : "robots.txt hoạt động")));
+                        robots.Error ?? (blocked ? Text.T("ecomcx-seo:analysis.robots_txt_blocks_the_entire") : Text.T("ecomcx-seo:analysis.robots_txt_works"))));
                     var sitemap = await FetchAsync(http, new Uri(home, "/sitemap.xml"), allowPrivate: true, ct);
                     var urlCount = sitemap.Html is { } sx ? Regex.Matches(sx, "<loc>").Count : 0;
                     items.Add(new("sitemap", "basic", "Sitemap", sitemap.Error is null && urlCount > 0 ? "pass" : "fail",
-                        sitemap.Error ?? (urlCount > 0 ? "sitemap.xml có {0} URL" : "sitemap.xml trống"), null, [urlCount.ToString()]));
+                        sitemap.Error ?? (urlCount > 0 ? Text.T("ecomcx-seo:analysis.sitemap_xml_has_urls") : Text.T("ecomcx-seo:analysis.sitemap_xml_is_empty")), null, [urlCount.ToString()]));
                 }
 
                 var scored = items.Where(i => i.Status != "info").ToList();
@@ -121,18 +121,24 @@ public static partial class Analysis
             r.MapPost("/analysis/competitor", async (CompetitorInput input, IHttpClientFactory http, CancellationToken ct) =>
             {
                 if (!Uri.TryCreate(input.Url?.Trim(), UriKind.Absolute, out var url) || url.Scheme is not ("http" or "https"))
-                    return Results.Json(new { title = "Nhập URL đầy đủ, vd https://example.com" }, statusCode: 422);
+                    return Results.Json(new { title = Text.T("ecomcx-seo:analysis.enter_a_full_url_e") }, statusCode: 422);
                 var page = await FetchAsync(http, url, allowPrivate: false, ct);
                 if (page.Error is not null) return Results.Json(new { title = page.Error }, statusCode: 422);
                 var items = InspectHtml(page, url);
                 var score = (int)Math.Round(items.Where(i => i.Status != "info").Sum(i => i.Status switch { "pass" => 1.0, "warning" => 0.5, _ => 0 }) * 100 / Math.Max(1, items.Count(i => i.Status != "info")));
-                return Results.Ok(new { url = page.FinalUrl, score, items, timeMs = page.TimeMs, size = page.Size });
+                return Results.Ok(new { url = page.FinalUrl, score, items = WithArgs(items), timeMs = page.TimeMs, size = page.Size });
             }).RequireCapability(Caps.Analysis);
         });
     }
 
     private static JsonArray JsonSerializerNode(List<AuditItem> items) =>
-        (JsonNode.Parse(System.Text.Json.JsonSerializer.Serialize(items, SeoSettings.Json)) as JsonArray)!;
+        (JsonNode.Parse(System.Text.Json.JsonSerializer.Serialize(WithArgs(items), SeoSettings.Json)) as JsonArray)!;
+
+    /// <summary>Thông điệp là token + biến vị trí {0}, {1}… trong Args → gói biến vào token (CMS dịch theo ngôn ngữ người xem).</summary>
+    private static List<AuditItem> WithArgs(List<AuditItem> items) => [.. items.Select(i =>
+        i.Args is { Count: > 0 } args && Text.TryParse(i.Message, out var key, out var json) && json is null
+            ? i with { Message = Text.T(key, args.Select((a, n) => (n, a)).ToDictionary(x => x.n.ToString(), x => (object)x.a)), Args = null }
+            : i)];
 
     private static AuditItem Count(string id, string group, string title, List<AuditRef> bad, int total, string ok, string fail, bool warnOnly = false) =>
         bad.Count == 0 ? new(id, group, title, "pass", ok)
@@ -172,8 +178,8 @@ public static partial class Analysis
             {
                 // Kiểm tra IP thật khi kết nối (chống DNS rebinding)
                 var addresses = await Dns.GetHostAddressesAsync(context.DnsEndPoint.Host, token);
-                var ip = addresses.FirstOrDefault(a => !IsPrivate(a)) ?? throw new HttpRequestException("Địa chỉ nội bộ không được phép");
-                if (addresses.Any(IsPrivate)) throw new HttpRequestException("Địa chỉ nội bộ không được phép");
+                var ip = addresses.FirstOrDefault(a => !IsPrivate(a)) ?? throw new HttpRequestException(Text.T("ecomcx-seo:analysis.internal_addresses_are_not_allowed"));
+                if (addresses.Any(IsPrivate)) throw new HttpRequestException(Text.T("ecomcx-seo:analysis.internal_addresses_are_not_allowed"));
                 var socket = new Socket(SocketType.Stream, ProtocolType.Tcp) { NoDelay = true };
                 try { await socket.ConnectAsync(ip, context.DnsEndPoint.Port, token); return new NetworkStream(socket, ownsSocket: true); }
                 catch { socket.Dispose(); throw; }
@@ -190,7 +196,7 @@ public static partial class Analysis
                 if ((int)res.StatusCode is >= 300 and < 400 && res.Headers.Location is { } loc)
                 {
                     current = loc.IsAbsoluteUri ? loc : new Uri(current, loc);
-                    if (current.Scheme is not ("http" or "https")) return Fail("Chuyển hướng tới giao thức không hỗ trợ");
+                    if (current.Scheme is not ("http" or "https")) return Fail(Text.T("ecomcx-seo:analysis.redirected_to_an_unsupported_protocol"));
                     continue;
                 }
                 if (!res.IsSuccessStatusCode) return Fail($"HTTP {(int)res.StatusCode}");
@@ -202,11 +208,11 @@ public static partial class Analysis
                 var headers = res.Headers.Concat(res.Content.Headers).ToDictionary(h => h.Key.ToLowerInvariant(), h => string.Join(", ", h.Value));
                 return new Page(Encoding.UTF8.GetString(buffer, 0, read), null, current.ToString(), sw.ElapsedMilliseconds, read, headers);
             }
-            return Fail("Chuyển hướng quá nhiều lần");
+            return Fail(Text.T("ecomcx-seo:analysis.too_many_redirects"));
         }
         catch (Exception e) when (e is HttpRequestException or TaskCanceledException or SocketException)
         {
-            return Fail(e is TaskCanceledException ? "Quá thời gian chờ (15 giây)" : "Không tải được trang — kiểm tra địa chỉ hoặc thử lại sau");
+            return Fail(e is TaskCanceledException ? Text.T("ecomcx-seo:analysis.timed_out_15_seconds") : Text.T("ecomcx-seo:analysis.couldn_t_load_the_page"));
         }
         Page Fail(string error) => new(null, error, current.ToString(), sw.ElapsedMilliseconds, 0, []);
     }
@@ -233,47 +239,47 @@ public static partial class Analysis
             .FirstOrDefault(t => string.Equals(Attr(t, "name"), name, StringComparison.OrdinalIgnoreCase) || string.Equals(Attr(t, "property"), name, StringComparison.OrdinalIgnoreCase)) is { } tag ? WebUtility.HtmlDecode(Attr(tag, "content")) : null;
 
         var title = WebUtility.HtmlDecode(TitleTag().Match(html).Groups[1].Value).Trim();
-        items.Add(new("title", "page", "Thẻ tiêu đề", title.Length == 0 ? "fail" : title.Length is >= 30 and <= 65 ? "pass" : "warning",
-            title.Length == 0 ? "Trang không có thẻ <title>" : title.Length is >= 30 and <= 65 ? "“{0}” ({1} ký tự)" : "“{0}” ({1} ký tự — nên 30–65 ký tự)", null, [title, title.Length.ToString()]));
+        items.Add(new("title", "page", Text.T("ecomcx-seo:analysis.title_tag"), title.Length == 0 ? "fail" : title.Length is >= 30 and <= 65 ? "pass" : "warning",
+            title.Length == 0 ? Text.T("ecomcx-seo:analysis.the_page_has_no_title") : title.Length is >= 30 and <= 65 ? Text.T("ecomcx-seo:analysis.characters") : Text.T("ecomcx-seo:analysis.characters_aim_for_30_65"), null, [title, title.Length.ToString()]));
         var desc = Meta("description") ?? "";
-        items.Add(new("description", "page", "Mô tả (meta description)", desc.Length == 0 ? "fail" : desc.Length is >= 70 and <= 165 ? "pass" : "warning",
-            desc.Length == 0 ? "Không có thẻ meta description" : desc.Length is >= 70 and <= 165 ? "{0} ký tự" : "{0} ký tự — nên 70–165 ký tự", null, [desc.Length.ToString()]));
+        items.Add(new("description", "page", Text.T("ecomcx-seo:analysis.meta_description"), desc.Length == 0 ? "fail" : desc.Length is >= 70 and <= 165 ? "pass" : "warning",
+            desc.Length == 0 ? Text.T("ecomcx-seo:analysis.no_meta_description_tag") : desc.Length is >= 70 and <= 165 ? Text.T("ecomcx-seo:analysis.characters_2") : Text.T("ecomcx-seo:analysis.characters_aim_for_70_165"), null, [desc.Length.ToString()]));
         var h1 = H1().Matches(html).Count;
-        items.Add(new("h1", "page", "Thẻ H1", h1 == 1 ? "pass" : h1 == 0 ? "fail" : "warning", h1 == 1 ? "Có đúng một thẻ H1" : h1 == 0 ? "Không có thẻ H1" : "Có {0} thẻ H1 — nên chỉ có một", null, [h1.ToString()]));
+        items.Add(new("h1", "page", Text.T("ecomcx-seo:analysis.h1_tag"), h1 == 1 ? "pass" : h1 == 0 ? "fail" : "warning", h1 == 1 ? Text.T("ecomcx-seo:analysis.exactly_one_h1_tag") : h1 == 0 ? Text.T("ecomcx-seo:analysis.no_h1_tag") : Text.T("ecomcx-seo:analysis.h1_tags_there_should_be"), null, [h1.ToString()]));
         var h2 = H2().Matches(html).Count;
-        items.Add(new("h2", "page", "Thẻ H2", h2 > 0 ? "pass" : "warning", h2 > 0 ? "Có {0} thẻ H2" : "Không có thẻ H2 — nội dung nên chia mục", null, [h2.ToString()]));
+        items.Add(new("h2", "page", Text.T("ecomcx-seo:analysis.h2_tags"), h2 > 0 ? "pass" : "warning", h2 > 0 ? Text.T("ecomcx-seo:analysis.h2_tags_2") : Text.T("ecomcx-seo:analysis.no_h2_tags_content_should"), null, [h2.ToString()]));
         var imgs = ImgTags().Matches(html).Select(m => m.Value).ToList();
         var noAlt = imgs.Count(i => !Regex.IsMatch(i, @"\balt\s*=", RegexOptions.IgnoreCase));
-        items.Add(new("img-alt", "page", "Alt của ảnh", noAlt == 0 ? "pass" : "warning", noAlt == 0 ? "{1} ảnh đều có alt" : "{0}/{1} ảnh thiếu thuộc tính alt", null, [noAlt.ToString(), imgs.Count.ToString()]));
+        items.Add(new("img-alt", "page", Text.T("ecomcx-seo:analysis.image_alt"), noAlt == 0 ? "pass" : "warning", noAlt == 0 ? Text.T("ecomcx-seo:analysis.all_images_have_alt") : Text.T("ecomcx-seo:analysis.images_are_missing_the_alt"), null, [noAlt.ToString(), imgs.Count.ToString()]));
         var canonical = LinkTags().Matches(html).Select(m => m.Value).FirstOrDefault(t => Attr(t, "rel").Equals("canonical", StringComparison.OrdinalIgnoreCase)) is { } c ? Attr(c, "href") : "";
-        items.Add(new("canonical", "page", "Canonical", canonical.Length > 0 ? "pass" : "warning", canonical.Length > 0 ? "{0}" : "Không có thẻ canonical — dễ bị trùng lặp nội dung", null, [canonical]));
+        items.Add(new("canonical", "page", "Canonical", canonical.Length > 0 ? "pass" : "warning", canonical.Length > 0 ? "{0}" : Text.T("ecomcx-seo:analysis.no_canonical_tag_risk_of"), null, [canonical]));
         var robots = Meta("robots") ?? "";
         items.Add(new("robots-meta", "page", "Meta robots", robots.Contains("noindex", StringComparison.OrdinalIgnoreCase) ? "fail" : "pass",
-            robots.Length == 0 ? "Không chặn index" : robots.Contains("noindex", StringComparison.OrdinalIgnoreCase) ? "Trang đang chặn index ({0})" : "{0}", null, [robots]));
+            robots.Length == 0 ? Text.T("ecomcx-seo:analysis.not_blocking_indexing") : robots.Contains("noindex", StringComparison.OrdinalIgnoreCase) ? Text.T("ecomcx-seo:analysis.the_page_blocks_indexing") : "{0}", null, [robots]));
         var og = Meta("og:title") is not null && Meta("og:image") is not null;
-        items.Add(new("open-graph", "page", "Open Graph", og ? "pass" : "warning", og ? "Có og:title và og:image (chia sẻ mạng xã hội đẹp)" : "Thiếu og:title hoặc og:image"));
+        items.Add(new("open-graph", "page", "Open Graph", og ? "pass" : "warning", og ? Text.T("ecomcx-seo:analysis.has_og_title_and_og") : Text.T("ecomcx-seo:analysis.missing_og_title_or_og")));
         var twitter = Meta("twitter:card");
-        items.Add(new("twitter", "page", "Twitter card", twitter is not null ? "pass" : "warning", twitter is not null ? "twitter:card = {0}" : "Thiếu thẻ twitter:card", null, [twitter ?? ""]));
+        items.Add(new("twitter", "page", "Twitter card", twitter is not null ? "pass" : "warning", twitter is not null ? "twitter:card = {0}" : Text.T("ecomcx-seo:analysis.missing_twitter_card_tag"), null, [twitter ?? ""]));
         var jsonLd = JsonLd().Matches(html);
         var types = jsonLd.SelectMany(m => Regex.Matches(m.Groups[1].Value, @"""@type""\s*:\s*""([^""]+)""").Select(x => x.Groups[1].Value)).Distinct().ToList();
-        items.Add(new("schema", "page", "Dữ liệu có cấu trúc (schema)", types.Count > 0 ? "pass" : "warning", types.Count > 0 ? "Có schema: {0}" : "Không có JSON-LD schema", null, [string.Join(", ", types.Take(12))]));
+        items.Add(new("schema", "page", Text.T("ecomcx-seo:analysis.structured_data_schema"), types.Count > 0 ? "pass" : "warning", types.Count > 0 ? Text.T("ecomcx-seo:analysis.schema_found") : Text.T("ecomcx-seo:analysis.no_json_ld_schema"), null, [string.Join(", ", types.Take(12))]));
         var lang = Regex.Match(html, @"<html[^>]*\blang\s*=\s*[""']([^""']+)", RegexOptions.IgnoreCase).Groups[1].Value;
-        items.Add(new("lang", "page", "Khai báo ngôn ngữ", lang.Length > 0 ? "pass" : "warning", lang.Length > 0 ? "lang=\"{0}\"" : "Thẻ <html> thiếu thuộc tính lang", null, [lang]));
+        items.Add(new("lang", "page", Text.T("ecomcx-seo:analysis.language_declaration"), lang.Length > 0 ? "pass" : "warning", lang.Length > 0 ? "lang=\"{0}\"" : Text.T("ecomcx-seo:analysis.the_html_tag_has_no"), null, [lang]));
         var viewport = Meta("viewport");
-        items.Add(new("viewport", "page", "Hiển thị trên điện thoại", viewport is not null ? "pass" : "fail", viewport is not null ? "Có thẻ viewport" : "Thiếu thẻ viewport — hiển thị kém trên điện thoại"));
-        items.Add(new("https-page", "page", "HTTPS", page.FinalUrl.StartsWith("https://") ? "pass" : "fail", page.FinalUrl.StartsWith("https://") ? "Trang dùng HTTPS" : "Trang không dùng HTTPS"));
-        items.Add(new("speed", "page", "Thời gian phản hồi", page.TimeMs < 800 ? "pass" : page.TimeMs < 2500 ? "warning" : "fail", "{0} ms", null, [page.TimeMs.ToString()]));
-        items.Add(new("size", "page", "Dung lượng HTML", page.Size < 500_000 ? "pass" : "warning", "{0} KB", null, [(page.Size / 1024).ToString()]));
+        items.Add(new("viewport", "page", Text.T("ecomcx-seo:analysis.mobile_display"), viewport is not null ? "pass" : "fail", viewport is not null ? Text.T("ecomcx-seo:analysis.has_a_viewport_tag") : Text.T("ecomcx-seo:analysis.no_viewport_tag_poor_display")));
+        items.Add(new("https-page", "page", "HTTPS", page.FinalUrl.StartsWith("https://") ? "pass" : "fail", page.FinalUrl.StartsWith("https://") ? Text.T("ecomcx-seo:analysis.the_page_uses_https") : Text.T("ecomcx-seo:analysis.the_page_does_not_use")));
+        items.Add(new("speed", "page", Text.T("ecomcx-seo:analysis.response_time"), page.TimeMs < 800 ? "pass" : page.TimeMs < 2500 ? "warning" : "fail", "{0} ms", null, [page.TimeMs.ToString()]));
+        items.Add(new("size", "page", Text.T("ecomcx-seo:analysis.html_size"), page.Size < 500_000 ? "pass" : "warning", "{0} KB", null, [(page.Size / 1024).ToString()]));
         var compressed = page.Headers.TryGetValue("content-encoding", out var enc) && enc.Length > 0;
-        items.Add(new("compression", "page", "Nén dữ liệu", compressed ? "pass" : "warning", compressed ? "Nén {0}" : "Máy chủ không nén HTML (gzip/br)", null, [enc ?? ""]));
+        items.Add(new("compression", "page", Text.T("ecomcx-seo:analysis.compression"), compressed ? "pass" : "warning", compressed ? Text.T("ecomcx-seo:analysis.compressed_with") : Text.T("ecomcx-seo:analysis.the_server_doesn_t_compress"), null, [enc ?? ""]));
         var links = Anchors().Matches(html).Select(m => m.Groups[1].Value).Where(h => !h.StartsWith('#') && !h.StartsWith("javascript:", StringComparison.OrdinalIgnoreCase)).ToList();
         var external = links.Count(h => Uri.TryCreate(h, UriKind.Absolute, out var u) && u.Host != url.Host);
-        items.Add(new("links", "page", "Liên kết", links.Count > 0 ? "pass" : "warning", "{0} liên kết nội bộ, {1} liên kết ngoài", null, [(links.Count - external).ToString(), external.ToString()]));
+        items.Add(new("links", "page", Text.T("ecomcx-seo:analysis.links"), links.Count > 0 ? "pass" : "warning", Text.T("ecomcx-seo:analysis.internal_links_external_links"), null, [(links.Count - external).ToString(), external.ToString()]));
         var text = Tags().Replace(Regex.Replace(html, @"<(script|style)[^>]*>.*?</\1>", " ", RegexOptions.IgnoreCase | RegexOptions.Singleline), " ");
         var words = Words().Matches(WebUtility.HtmlDecode(text)).Count;
-        items.Add(new("words", "page", "Số từ", words >= 300 ? "pass" : "warning", words >= 300 ? "{0} từ" : "{0} từ — nội dung ít", null, [words.ToString()]));
+        items.Add(new("words", "page", Text.T("ecomcx-seo:analysis.word_count"), words >= 300 ? "pass" : "warning", words >= 300 ? Text.T("ecomcx-seo:analysis.words") : Text.T("ecomcx-seo:analysis.words_not_much_content"), null, [words.ToString()]));
         var favicon = LinkTags().Matches(html).Any(m => Attr(m.Value, "rel").Contains("icon", StringComparison.OrdinalIgnoreCase));
-        items.Add(new("favicon", "page", "Favicon", favicon ? "pass" : "warning", favicon ? "Có favicon" : "Không khai báo favicon"));
+        items.Add(new("favicon", "page", "Favicon", favicon ? "pass" : "warning", favicon ? Text.T("ecomcx-seo:analysis.has_a_favicon") : Text.T("ecomcx-seo:analysis.no_favicon_declared")));
         return items;
     }
 

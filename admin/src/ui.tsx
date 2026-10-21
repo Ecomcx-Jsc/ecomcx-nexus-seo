@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { __, Badge, Button, Checkbox, Field, Input, MediaPicker, Select, Spinner, Tabs, Textarea, api, notify, useApi } from "@cms/admin-sdk";
+import { Badge, Button, Checkbox, Field, Input, MediaPicker, Select, Spinner, Tabs, Textarea, api, notify, useApi } from "@cms/admin-sdk";
 import type { ImageRef, Robots, SeoSettings } from "../../frontend/lib/settings";
 import { VARIABLES } from "../../frontend/lib/vars";
+import { t } from "./i18n";
 
 export const API = "/plugins/ecomcx-seo";
 
@@ -25,7 +26,7 @@ export const Icon = {
 
 export function ScoreBadge({ score, size = "md" }: { score?: number | null; size?: "sm" | "md" | "lg" }) {
   const cls = score == null ? "none" : score >= 80 ? "good" : score >= 50 ? "ok" : "bad";
-  return <span className={`ecx-score ecx-score-${cls} ecx-score-${size}`} title={__("Điểm SEO")}>{score == null ? "–" : score}{size === "lg" && score != null && <small>/100</small>}</span>;
+  return <span className={`ecx-score ecx-score-${cls} ecx-score-${size}`} title={t("ui.seo_score")}>{score == null ? "–" : score}{size === "lg" && score != null && <small>/100</small>}</span>;
 }
 
 export function StatusIcon({ status }: { status: "pass" | "warning" | "fail" | "info" }) {
@@ -39,7 +40,7 @@ export function Counter({ value, min, max }: { value: string; min: number; max: 
   return (
     <span className="ecx-counter">
       <span className={`ecx-counter-bar ecx-${tone}`} style={{ width: `${Math.min(100, (n / max) * 100)}%` }} />
-      <span className="ecx-counter-text">{__("{0}/{1} ký tự", n, max)}</span>
+      <span className="ecx-counter-text">{t("ui.characters", { n, max })}</span>
     </span>
   );
 }
@@ -59,12 +60,12 @@ export function TemplateInput({ value, onChange, multiline, placeholder }: { val
     <div className="ecx-tpl">
       {multiline ? <Textarea ref={ref as any} rows={2} value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />
         : <Input ref={ref as any} value={value} placeholder={placeholder} onChange={(e) => onChange(e.target.value)} />}
-      <button type="button" className="ecx-tpl-btn" onClick={() => setOpen(!open)} title={__("Chèn biến")}>%</button>
+      <button type="button" className="ecx-tpl-btn" onClick={() => setOpen(!open)} title={t("ui.insert_variable")}>%</button>
       {open && (
         <div className="ecx-tpl-menu" role="listbox">
           {VARIABLES.map((v) => (
-            <button key={v.name} type="button" onClick={() => insert(v.name === "%customfield(tên)%" ? "%customfield()%" : v.name)}>
-              <code>{v.name}</code><span>{__(v.description)}</span>
+            <button key={v.name} type="button" onClick={() => insert(v.name === "%customfield(key)%" ? "%customfield()%" : v.name)}>
+              <code>{v.name}</code><span>{t(v.description)}</span>
             </button>
           ))}
         </div>
@@ -80,14 +81,14 @@ export function RobotsField({ value, onChange, allowDefault, defaultLabel }: { v
   const set = (k: keyof Robots, v: boolean) => onChange({ ...r, [k]: v });
   return (
     <div className="ecx-robots">
-      {allowDefault && <Checkbox checked={!custom} onChange={(v) => onChange(v ? null : {})} label={defaultLabel ?? __("Dùng cài đặt mặc định")} />}
+      {allowDefault && <Checkbox checked={!custom} onChange={(v) => onChange(v ? null : {})} label={defaultLabel ?? t("ui.use_default_settings")} />}
       {(!allowDefault || custom) && (
         <div className="ecx-robots-grid">
-          <Checkbox checked={!!r.noindex} onChange={(v) => set("noindex", v)} label={__("Không index (noindex)")} description={__("Ẩn trang khỏi kết quả tìm kiếm")} />
-          <Checkbox checked={!!r.nofollow} onChange={(v) => set("nofollow", v)} label={__("Không theo liên kết (nofollow)")} />
-          <Checkbox checked={!!r.noarchive} onChange={(v) => set("noarchive", v)} label={__("Không lưu bản cache (noarchive)")} />
-          <Checkbox checked={!!r.nosnippet} onChange={(v) => set("nosnippet", v)} label={__("Không hiện đoạn trích (nosnippet)")} />
-          <Checkbox checked={!!r.noimageindex} onChange={(v) => set("noimageindex", v)} label={__("Không index ảnh (noimageindex)")} />
+          <Checkbox checked={!!r.noindex} onChange={(v) => set("noindex", v)} label={t("ui.no_index_noindex")} description={t("ui.hide_the_page_from_search")} />
+          <Checkbox checked={!!r.nofollow} onChange={(v) => set("nofollow", v)} label={t("ui.don_t_follow_links_nofollow")} />
+          <Checkbox checked={!!r.noarchive} onChange={(v) => set("noarchive", v)} label={t("ui.don_t_cache_noarchive")} />
+          <Checkbox checked={!!r.nosnippet} onChange={(v) => set("nosnippet", v)} label={t("ui.no_snippet_nosnippet")} />
+          <Checkbox checked={!!r.noimageindex} onChange={(v) => set("noimageindex", v)} label={t("ui.don_t_index_images_noimageindex")} />
         </div>
       )}
     </div>
@@ -139,7 +140,7 @@ export function useSeoSettings() {
   async function save() {
     if (!draft) return;
     setSaving(true);
-    try { await api.put(`${API}/settings`, draft); notify.success(__("Đã lưu cài đặt SEO")); reload(); }
+    try { await api.put(`${API}/settings`, draft); notify.success(t("ui.seo_settings_saved")); reload(); }
     catch (e) { notify.error((e as Error).message); }
     finally { setSaving(false); }
   }
@@ -156,9 +157,9 @@ export function SettingsShell({ tabs, tab, onTab, dirty, saving, onSave, onReset
       <div className="ecx-shell-body">{children}</div>
       {dirty && (
         <div className="ecx-savebar">
-          <span>{__("Có thay đổi chưa lưu")}</span>
-          <Button variant="secondary" onClick={onReset}>{__("Huỷ thay đổi")}</Button>
-          <Button variant="primary" loading={saving} onClick={onSave}>{__("Lưu thay đổi")}</Button>
+          <span>{t("ui.you_have_unsaved_changes")}</span>
+          <Button variant="secondary" onClick={onReset}>{t("ui.discard_changes")}</Button>
+          <Button variant="primary" loading={saving} onClick={onSave}>{t("common.save_changes")}</Button>
         </div>
       )}
     </div>
@@ -172,7 +173,7 @@ export function useContentTypes() {
   const { data } = useApi<{ postTypes: Array<{ name: string; label: string; public: boolean; source?: string }>; taxonomies: Array<{ name: string; label: string; public: boolean }> }>("/admin/bootstrap");
   return {
     postTypes: (data?.postTypes ?? []).filter((p) => p.public !== false),
-    taxonomies: (data?.taxonomies ?? []).filter((t) => t.public !== false),
+    taxonomies: (data?.taxonomies ?? []).filter((item) => item.public !== false),
   };
 }
 

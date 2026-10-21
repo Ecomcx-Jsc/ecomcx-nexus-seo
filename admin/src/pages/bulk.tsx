@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { __, Button, Card, Checkbox, EmptyState, Input, PageHeader, Select, Textarea, api, notify, useApi } from "@cms/admin-sdk";
+import { Button, Card, Checkbox, EmptyState, Input, PageHeader, Select, Textarea, api, notify, useApi } from "@cms/admin-sdk";
 import { META_KEY, type PostSeo } from "../../../frontend/lib/settings";
 import { Counter, Loading, ScoreBadge, useContentTypes } from "../ui";
+import { t } from "../i18n";
 
 interface Row { id: number; type: string; title: string; slug: string; status: string; link: string; meta?: Record<string, any> | null }
 interface ListResponse { result: { items: Row[]; total: number; page: number; totalPages: number } }
 type Edit = Pick<PostSeo, "title" | "description"> & { keywords?: string; noindex?: boolean };
 
-const STATUS: Record<string, string> = { publish: "Đã đăng", draft: "Bản nháp", pending: "Chờ duyệt", scheduled: "Hẹn giờ", private: "Riêng tư" };
+const STATUS: Record<string, string> = { publish: t("bulk.published"), draft: t("bulk.draft"), pending: t("bulk.pending"), scheduled: t("bulk.scheduled"), private: t("bulk.private") };
 
 export function BulkPage() {
   const { postTypes } = useContentTypes();
@@ -37,7 +38,7 @@ export function BulkPage() {
   });
 
   function guard(fn: () => void) {
-    if (dirty && !confirm(__("Bỏ các thay đổi chưa lưu?"))) return;
+    if (dirty && !confirm(t("bulk.discard_unsaved_changes"))) return;
     setEdits({}); fn();
   }
   async function saveAll() {
@@ -58,34 +59,34 @@ export function BulkPage() {
     }
     setSaving(false);
     setEdits((e) => Object.fromEntries(Object.entries(e).filter(([id]) => failed.includes(Number(id)))));
-    if (failed.length) notify.error(__("Không lưu được {0} bài: {1}", failed.length, failed.map((x) => `#${x}`).join(", ")));
-    if (ok) notify.success(__("Đã lưu {0} bài", ok));
+    if (failed.length) notify.error(t("bulk.couldn_t_save_posts", { count: failed.length, failed: failed.map((x) => `#${x}`).join(", ") }));
+    if (ok) notify.success(t("bulk.saved_posts", { ok }));
     reload();
   }
 
   return (
     <>
-      <PageHeader title={__("Sửa SEO hàng loạt")} description={__("Sửa nhanh tiêu đề, mô tả và từ khoá SEO của nhiều bài cùng lúc.")}
-        actions={<Button variant="primary" loading={saving} disabled={!dirty} onClick={saveAll}>{dirty ? __("Lưu {0} bài", dirty) : __("Lưu thay đổi")}</Button>} />
+      <PageHeader title={t("bulk.bulk_seo_editor")} description={t("bulk.quickly_edit_seo_titles_descriptions")}
+        actions={<Button variant="primary" loading={saving} disabled={!dirty} onClick={saveAll}>{dirty ? t("bulk.save_posts", { dirty }) : t("common.save_changes")}</Button>} />
       <Card>
         <div className="ecx-flex" style={{ marginBottom: 12, flexWrap: "wrap" }}>
           <Select style={{ width: 160 }} value={type} onChange={(e) => { const v = e.target.value; guard(() => { setType(v); setPage(1); }); }}
-            options={postTypes.map((p) => ({ value: p.name, label: __(p.label) }))} />
+            options={postTypes.map((p) => ({ value: p.name, label: p.label }))} />
           <Select style={{ width: 150 }} value={status} onChange={(e) => { const v = e.target.value; guard(() => { setStatus(v); setPage(1); }); }}
-            options={[{ value: "all", label: __("Mọi trạng thái") }, ...Object.entries(STATUS).map(([value, label]) => ({ value, label: __(label) }))]} />
+            options={[{ value: "all", label: t("bulk.all_statuses") }, ...Object.entries(STATUS).map(([value, label]) => ({ value, label }))]} />
           <Select style={{ width: 200 }} value={filter} onChange={(e) => setFilter(e.target.value)}
-            options={[{ value: "", label: __("Mọi bài") }, { value: "noDescription", label: __("Chưa có mô tả SEO") }, { value: "noKeyword", label: __("Chưa có từ khoá") }, { value: "low", label: __("Điểm dưới 50") }]} />
+            options={[{ value: "", label: t("bulk.all_posts") }, { value: "noDescription", label: t("bulk.no_seo_description") }, { value: "noKeyword", label: t("bulk.no_keyword_yet") }, { value: "low", label: t("bulk.score_below_50") }]} />
           <span className="ecx-spacer" />
-          <Input style={{ width: 220 }} value={search} placeholder={__("Tìm bài…")} onChange={(e) => setSearch(e.target.value)}
+          <Input style={{ width: 220 }} value={search} placeholder={t("bulk.search_posts")} onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") guard(() => { setQ(search); setPage(1); }); }} />
         </div>
-        {!data ? <Loading /> : rows.length === 0 ? <EmptyState title={__("Không có bài phù hợp")} /> : (
+        {!data ? <Loading /> : rows.length === 0 ? <EmptyState title={t("bulk.no_matching_posts")} /> : (
           <div style={{ overflowX: "auto" }}>
             <table className="ecx-table">
               <thead><tr>
-                <th style={{ width: 56 }}>{__("Điểm")}</th><th style={{ minWidth: 200 }}>{__("Bài viết")}</th>
-                <th style={{ minWidth: 260 }}>{__("Tiêu đề SEO")}</th><th style={{ minWidth: 300 }}>{__("Mô tả SEO")}</th>
-                <th style={{ minWidth: 180 }}>{__("Từ khoá chính")}</th><th style={{ width: 80 }}>noindex</th>
+                <th style={{ width: 56 }}>{t("bulk.score")}</th><th style={{ minWidth: 200 }}>{t("bulk.posts")}</th>
+                <th style={{ minWidth: 260 }}>{t("common.seo_title")}</th><th style={{ minWidth: 300 }}>{t("common.seo_description")}</th>
+                <th style={{ minWidth: 180 }}>{t("bulk.focus_keyword")}</th><th style={{ width: 80 }}>noindex</th>
               </tr></thead>
               <tbody>
                 {rows.map((r) => {
@@ -95,9 +96,9 @@ export function BulkPage() {
                     <tr key={r.id} style={changed ? { background: "var(--app-accent-soft)" } : undefined}>
                       <td><ScoreBadge score={seoOf(r).score} size="sm" /></td>
                       <td>
-                        <a className="ecx-link" href={`#/content/${r.type}/${r.id}`}><strong>{r.title || __("(không có tiêu đề)")}</strong></a>
+                        <a className="ecx-link" href={`#/content/${r.type}/${r.id}`}><strong>{r.title || t("bulk.no_title")}</strong></a>
                         <div className="ecx-muted ecx-trunc" style={{ maxWidth: 240 }}>{r.link}</div>
-                        {r.status !== "publish" && <div className="ecx-muted">{__(STATUS[r.status] ?? r.status)}</div>}
+                        {r.status !== "publish" && <div className="ecx-muted">{STATUS[r.status] ?? r.status}</div>}
                       </td>
                       <td>
                         <Input value={v.title} placeholder={r.title} onChange={(e) => edit(r.id, { title: e.target.value })} />
@@ -108,7 +109,7 @@ export function BulkPage() {
                         <Counter value={v.description ?? ""} min={120} max={160} />
                       </td>
                       <td>
-                        <Input value={v.keywords} placeholder={__("cách nhau dấu phẩy")} onChange={(e) => edit(r.id, { keywords: e.target.value })} />
+                        <Input value={v.keywords} placeholder={t("bulk.comma_separated")} onChange={(e) => edit(r.id, { keywords: e.target.value })} />
                       </td>
                       <td><Checkbox checked={!!v.noindex} onChange={(c) => edit(r.id, { noindex: c })} /></td>
                     </tr>
@@ -121,7 +122,7 @@ export function BulkPage() {
         {data && data.result.totalPages > 1 && (
           <div className="ecx-flex" style={{ marginTop: 12, justifyContent: "flex-end" }}>
             <Button size="sm" variant="secondary" disabled={page <= 1} onClick={() => guard(() => setPage(page - 1))}>‹</Button>
-            <span className="ecx-muted">{__("Trang {0}/{1}", page, data.result.totalPages)}</span>
+            <span className="ecx-muted">{t("common.page", { page, totalPages: data.result.totalPages })}</span>
             <Button size="sm" variant="secondary" disabled={page >= data.result.totalPages} onClick={() => guard(() => setPage(page + 1))}>›</Button>
           </div>
         )}
