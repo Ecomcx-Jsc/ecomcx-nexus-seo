@@ -73,6 +73,9 @@
 .ecx-bars > span { height: 100%; }
 
 /* Hộp SEO trong trình soạn */
+.ecx-header-item { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 9px 0 5px; border: 1px solid transparent; border-radius: 6px; background: none; color: var(--app-fg); font-size: 12.5px; font-weight: 500; cursor: pointer; }
+.ecx-header-item:hover { background: var(--app-subtle); }
+.ecx-header-item.active { border-color: var(--app-border); background: var(--app-subtle); }
 .ecx-box-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
 .ecx-serp { border: 1px solid var(--app-border); border-radius: 10px; padding: 14px 16px; background: #fff; color: #202124; font-family: Arial, sans-serif; }
 .ecx-serp.mobile { max-width: 380px; }

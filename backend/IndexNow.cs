@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Cms.Plugin.Sdk;
+using Cms.Plugin.Sdk.Jobs;
 using Cms.Plugin.Sdk.Contracts;
 using Cms.Plugin.Sdk.Hooks;
 using Cms.Plugin.Sdk.Services;
@@ -27,6 +28,7 @@ public static class IndexNow
 
     public static void Register(IPluginContext ctx)
     {
+        RegisterJob(ctx);
         ctx.Migrations.Add("003_indexnow", $"""
             create table if not exists {Table} (
                 id bigserial primary key,
@@ -87,29 +89,35 @@ public static class IndexNow
         });
     }
 
-    /// <summary>Gửi nền (không làm chậm việc lưu bài): scope DI riêng vì request đã kết thúc khi gửi xong.</summary>
+    public const string JobType = "ecomcx-seo:indexnow";
+    private const string ConnectFailed = "Không kết nối được IndexNow";
+    public sealed record IndexNowJob(string Link);
+
+    /// <summary>
+    /// Gửi qua hàng đợi việc nền của CMS: không làm chậm việc lưu bài, không mất khi hệ thống khởi động lại,
+    /// tự thử lại khi máy tìm kiếm bận/lỗi. Sửa bài nhiều lần liên tiếp chỉ gửi một lần (chống trùng theo đường dẫn, chờ 10 giây).
+    /// </summary>
     private static async Task QueueAsync(IServiceProvider services, PostDto post)
     {
         var s = await SeoSettings.LoadAsync(services.GetRequiredService<IOptionStore>(), CancellationToken.None);
         if (!SeoSettings.Bool(s["modules"]?["indexNow"], true) || !SeoSettings.Bool(s["indexNow"]?["autoSubmit"], true)) return;
         if (!SeoSettings.Strings(s["indexNow"]?["postTypes"]).Contains(post.Type)) return;
         if (SeoSettings.Bool(post.Meta[SeoMeta.MetaKey]?["robots"]?["noindex"])) return;
-        var scopes = services.GetRequiredService<IServiceScopeFactory>();
-        var link = post.Link;
-        _ = Task.Run(async () =>
-        {
-            await using var scope = scopes.CreateAsyncScope();
-            var sp = scope.ServiceProvider;
-            try
-            {
-                var options = sp.GetRequiredService<IOptionStore>();
-                var url = await SiteUrlAsync(options, CancellationToken.None) + link;
-                var (status, message) = await SendAsync(sp.GetRequiredService<IHttpClientFactory>(), options, [url], CancellationToken.None);
-                await LogAsync(sp.GetRequiredService<IDbConnectionFactory>(), [url], status, message, "auto", CancellationToken.None);
-            }
-            catch { /* gửi thất bại không ảnh hưởng nội dung */ }
-        });
+        await services.GetRequiredService<IJobQueue>().EnqueueAsync(JobType, new IndexNowJob(post.Link),
+            new JobOptions { DedupKey = $"{JobType}:{post.Link}", Delay = TimeSpan.FromSeconds(10) });
     }
+
+    private static void RegisterJob(IPluginContext ctx) =>
+        ctx.Jobs.Register<IndexNowJob>(JobType, async (job, jc) =>
+        {
+            var sp = jc.Services;
+            var options = sp.GetRequiredService<IOptionStore>();
+            var url = await SiteUrlAsync(options, jc.CancellationToken) + job.Link;
+            var (status, message) = await SendAsync(sp.GetRequiredService<IHttpClientFactory>(), options, [url], jc.CancellationToken);
+            await LogAsync(sp.GetRequiredService<IDbConnectionFactory>(), [url], status, message, "auto", jc.CancellationToken);
+            // Máy tìm kiếm bận / lỗi máy chủ / mất kết nối → để hàng đợi thử lại (khoá sai, URL sai thì không thử lại)
+            if (status == 429 || status >= 500 || message == ConnectFailed) throw new InvalidOperationException(message);
+        }, new JobTypeOptions { MaxAttempts = 5, RetryDelay = TimeSpan.FromMinutes(1), Timeout = TimeSpan.FromSeconds(30), Label = "Gửi URL tới IndexNow" });
 
     private static async Task<(int Status, string Message)> SendAsync(IHttpClientFactory http, IOptionStore options, List<string> urls, CancellationToken ct)
     {
@@ -135,7 +143,7 @@ public static class IndexNow
             };
             return ((int)res.StatusCode, message);
         }
-        catch (Exception e) when (e is HttpRequestException or TaskCanceledException) { return (0, "Không kết nối được IndexNow"); }
+        catch (Exception e) when (e is HttpRequestException or TaskCanceledException) { return (0, ConnectFailed); }
     }
 
     private static async Task LogAsync(IDbConnectionFactory db, List<string> urls, int status, string message, string source, CancellationToken ct)

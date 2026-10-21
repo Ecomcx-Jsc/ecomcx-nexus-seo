@@ -54,7 +54,7 @@ Tải gói `ecomcx-seo-<phiên bản>.zip` lên ở **Plugin › Tải plugin l�
 Mã nguồn nằm trong thư mục `plugins/ecomcx-seo` của Ecomcx Nexus (backend tham chiếu gói `Cms.Plugin.Sdk` ở `sdk/nuget` của repo đó):
 
 ```bash
-npx create-cms pack plugins/ecomcx-seo        # build backend + admin → dist/ecomcx-seo-<phiên bản>.zip
+npx github:Ecomcx-Jsc/ecomcx-sdk pack plugins/ecomcx-seo        # build backend + admin → dist/ecomcx-seo-<phiên bản>.zip
 python3 tests/plugins/ecomcx_seo_test.py      # kiểm thử API + website
 node tests/e2e/ecomcx-seo-ui.mjs              # kiểm thử giao diện admin (vi/en)
 ```
