@@ -1,4 +1,4 @@
-import { __, Field, Input, registerDashboardWidget, registerMetaBox, registerPage, registerPostListColumn, registerTermMetaBox, useApi, type TermMetaBoxProps } from "@cms/admin-sdk";
+import { __, Field, Input, registerDashboardWidget, registerEditorSidebar, registerMetaBox, registerPage, registerPostListColumn, registerTermMetaBox, useApi, type MetaBoxProps, type TermMetaBoxProps } from "@cms/admin-sdk";
 import { META_KEY, type PostSeo } from "../../frontend/lib/settings";
 import { AnalysisPage } from "./pages/analysis";
 import { BulkPage } from "./pages/bulk";
@@ -27,7 +27,19 @@ registerPage({ path: "/ecx-seo/bulk", title: "Sửa hàng loạt", component: Bu
 registerPage({ path: "/ecx-seo/tools", title: "Công cụ", component: ToolsPage });
 
 // ------------------------------------------------------------------ trình soạn bài
-registerMetaBox({ id: "ecx-seo", title: "SEO", context: "main", priority: 20, component: SeoBox });
+// Sidebar riêng + nút điểm trên thanh hành động (như Rank Math); CMS cũ chưa có sidebar plugin thì dùng hộp meta dưới nội dung.
+// Điểm hiện trên nút đọc từ meta — SeoBox luôn được giữ mount nên vẫn chấm và lưu điểm khi sidebar đang đóng.
+function SeoHeaderItem({ meta, active, toggle }: MetaBoxProps & { active: boolean; toggle(): void }) {
+  const seo: PostSeo = meta[META_KEY] ?? {};
+  return (
+    <button type="button" className={`ecx-header-item${active ? " active" : ""}`} aria-pressed={active} onClick={toggle}>
+      <ScoreBadge score={seo.focusKeywords?.[0] ? seo.score : null} size="sm" />SEO
+    </button>
+  );
+}
+if ((globalThis as any).__CMS_ADMIN__?.registerEditorSidebar)
+  registerEditorSidebar({ id: "ecx-seo", title: "SEO", priority: 20, headerItem: SeoHeaderItem, component: SeoBox });
+else registerMetaBox({ id: "ecx-seo", title: "SEO", context: "main", priority: 20, component: SeoBox });
 
 // ------------------------------------------------------------------ danh sách bài: điểm + từ khoá
 registerPostListColumn({
