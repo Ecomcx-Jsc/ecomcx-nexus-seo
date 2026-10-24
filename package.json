@@ -7,8 +7,8 @@
     "typecheck": "tsc --noEmit -p ."
   },
   "devDependencies": {
-    "@ecomcx/ecomweb-admin-sdk": "^1.25.0",
-    "@ecomcx/ecomweb-theme-sdk": "^1.25.0",
+    "@ecomcx/ecomweb-admin-sdk": "^1.26.0",
+    "@ecomcx/ecomweb-theme-sdk": "^1.26.0",
     "@types/react": "^19",
     "typescript": "5.9.3"
   }
