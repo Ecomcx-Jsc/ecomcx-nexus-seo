@@ -1,7 +1,7 @@
 {
   "name": "Ecomcx SEO",
   "slug": "ecomcx-seo",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "author": "Ecomcx",
   "description": "Tối ưu tìm kiếm toàn diện: tiêu đề & meta theo mẫu, chấm điểm nội dung theo từ khoá, schema JSON-LD, sitemap (thường, tin tức, video), chuyển hướng, theo dõi 404, breadcrumbs, SEO hình ảnh, IndexNow, Google Search Console, phân tích website và đối thủ.",
   "requires": {
