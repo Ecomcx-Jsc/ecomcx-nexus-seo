@@ -1,6 +1,6 @@
 # Ecomcx SEO
 
-Plugin tối ưu tìm kiếm cho Ecomcx Nexus — một gói duy nhất, đủ tính năng.
+Plugin tối ưu tìm kiếm cho ECX Nexus — một gói duy nhất, đủ tính năng.
 
 ## Tính năng
 
@@ -51,12 +51,12 @@ Tải gói `ecomcx-seo-<phiên bản>.zip` lên ở **Plugin › Tải plugin l�
 
 ## Phát triển
 
-Repo này là mã nguồn gốc. Ecomcx Nexus đi kèm một bản sao ở `plugins/ecomcx-seo` (đồng bộ từ đây khi phát hành); backend tham chiếu gói `Cms.Plugin.Sdk` ≥ 1.4.0 (feed `sdk/nuget` của Ecomcx Nexus, hoặc đặt `CMS_NUGET_FEED`):
+Repo này là mã nguồn gốc. ECX Nexus đi kèm một bản sao ở `plugins/ecomcx-seo` (đồng bộ từ đây khi phát hành); backend tham chiếu gói `Cms.Plugin.Sdk` ≥ 1.4.0 (feed `sdk/nuget` của ECX Nexus, hoặc đặt `CMS_NUGET_FEED`):
 
 ```bash
-npx github:Ecomcx-Jsc/ecomcx-sdk validate .   # manifest + locales (cú pháp ICU, khoá/biến khớp giữa vi và en)
-npx github:Ecomcx-Jsc/ecomcx-sdk pack .       # build backend + admin → dist/ecomcx-seo-<phiên bản>.zip
-# Trong repo Ecomcx Nexus (sau khi đồng bộ bản sao):
+npx github:Ecomcx-Jsc/ecx-nexus-sdk validate .   # manifest + locales (cú pháp ICU, khoá/biến khớp giữa vi và en)
+npx github:Ecomcx-Jsc/ecx-nexus-sdk pack .       # build backend + admin → dist/ecomcx-seo-<phiên bản>.zip
+# Trong repo ECX Nexus (sau khi đồng bộ bản sao):
 python3 tests/plugins/ecomcx_seo_test.py      # kiểm thử API + website
 node tests/e2e/ecomcx-seo-ui.mjs              # kiểm thử giao diện admin (vi/en)
 ```
