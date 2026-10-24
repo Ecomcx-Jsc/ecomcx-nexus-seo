@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, Checkbox, Input, PageHeader, Select, useApi } from "@cms/admin-sdk";
+import { Card, Checkbox, Input, PageHeader, Select, useApi } from "@ecomcx/nexus-admin-sdk";
 import { postTypeSettings, taxonomySettings, type SeoSettings, type TypeSettings } from "../../../frontend/lib/settings";
 import { replaceVars, type VarContext } from "../../../frontend/lib/vars";
 import { Hint, ImageField, LinesInput, Loading, RobotsField, Row, SettingsShell, TemplateInput, useContentTypes, useSeoSettings } from "../ui";

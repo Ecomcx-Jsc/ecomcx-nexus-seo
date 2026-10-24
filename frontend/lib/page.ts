@@ -1,5 +1,5 @@
 // Ngữ cảnh SEO của một trang: mẫu tiêu đề/mô tả đã thay biến, robots, canonical, breadcrumbs, chuyên mục chính.
-import { formatDate, getTerms, type ResolveResult, type Site, type Term } from "@cms/theme-sdk";
+import { formatDate, getTerms, type ResolveResult, type Site, type Term } from "@ecomcx/nexus-theme-sdk";
 import type { PostSeo, Robots, SeoSettings } from "./settings";
 import { postTypeSettings, taxonomySettings } from "./settings";
 import { extract } from "./text";

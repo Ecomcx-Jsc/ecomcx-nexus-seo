@@ -1,4 +1,4 @@
-import { Field, Input, registerDashboardWidget, registerEditorSidebar, registerMetaBox, registerPage, registerPostListColumn, registerTermMetaBox, useApi, type MetaBoxProps, type TermMetaBoxProps } from "@cms/admin-sdk";
+import { Field, Input, registerDashboardWidget, registerEditorSidebar, registerMetaBox, registerPage, registerPostListColumn, registerTermMetaBox, useApi, type MetaBoxProps, type TermMetaBoxProps } from "@ecomcx/nexus-admin-sdk";
 import { META_KEY, type PostSeo } from "../../frontend/lib/settings";
 import { AnalysisPage } from "./pages/analysis";
 import { BulkPage } from "./pages/bulk";

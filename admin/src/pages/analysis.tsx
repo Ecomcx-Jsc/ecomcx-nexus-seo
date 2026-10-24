@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Button, Card, EmptyState, Input, PageHeader, Select, Tabs, api, notify, useApi } from "@cms/admin-sdk";
+import { Button, Card, EmptyState, Input, PageHeader, Select, Tabs, api, notify, useApi } from "@ecomcx/nexus-admin-sdk";
 import { API, Hint, Icon, Loading, ScoreBadge, StatusIcon } from "../ui";
 import { useHashTab } from "./titles";
 import { t } from "../i18n";
@@ -38,7 +38,7 @@ function Results({ items }: { items: AuditItem[] }) {
                     <div className="ecx-check">
                       <StatusIcon status={i.status} />
                       <div style={{ flex: 1 }}>
-                        <strong>{i.title}</strong> <span className="ecx-muted">— {legacyMessage(i)}</span>
+                        <strong>{i.title}</strong> <span className="ecx-muted">— {legacyMessage({ message: i.message, args: i.args ?? undefined })}</span>
                         {!!i.items?.length && (
                           <button type="button" className="ecx-link" style={{ border: 0, background: "none", padding: 0, marginLeft: 6, cursor: "pointer" }}
                             onClick={() => setOpen(open === i.id ? null : i.id)}>{open === i.id ? t("analysis.hide") : t("analysis.show_posts", { count: i.items.length })}</button>

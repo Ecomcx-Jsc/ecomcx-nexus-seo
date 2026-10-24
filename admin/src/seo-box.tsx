@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Button, Checkbox, Field, Input, Select, Tabs, api, useApi, type MetaBoxProps } from "@cms/admin-sdk";
+import { Button, Checkbox, Field, Input, Select, Tabs, api, useApi, type MetaBoxProps } from "@ecomcx/nexus-admin-sdk";
 import { analyze, quickKeyword, type Check } from "../../frontend/lib/analysis";
 import { META_KEY, postTypeSettings, type PostSeo, type SeoSettings } from "../../frontend/lib/settings";
 import { extract } from "../../frontend/lib/text";

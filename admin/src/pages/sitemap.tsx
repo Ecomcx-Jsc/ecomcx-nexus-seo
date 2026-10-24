@@ -1,4 +1,4 @@
-import { Card, Checkbox, Input, PageHeader, useApi } from "@cms/admin-sdk";
+import { Card, Checkbox, Input, PageHeader, useApi } from "@ecomcx/nexus-admin-sdk";
 import { Hint, Icon, IdsInput, Loading, Row, SettingsShell, useContentTypes, useSeoSettings } from "../ui";
 import { useHashTab } from "./titles";
 import { t } from "../i18n";

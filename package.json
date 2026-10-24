@@ -1,0 +1,15 @@
+{
+  "name": "cms-plugin-ecomcx-seo",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Kiểu dữ liệu + kiểm tra cho phần admin/frontend của plugin (CMS build bằng SDK của chính nó)",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "@ecomcx/nexus-admin-sdk": "^1.24.1",
+    "@ecomcx/nexus-theme-sdk": "^1.24.1",
+    "@types/react": "^19",
+    "typescript": "5.9.3"
+  }
+}

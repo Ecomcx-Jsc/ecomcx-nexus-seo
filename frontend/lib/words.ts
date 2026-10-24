@@ -1,5 +1,5 @@
 // Chữ hiển thị trên website (theo ngôn ngữ của website / trang đang xem). Người dùng ghi đè được trong cài đặt Breadcrumbs.
-import type { Site } from "@cms/theme-sdk";
+import type { Site } from "@ecomcx/nexus-theme-sdk";
 
 const VI = {
   home: "Trang chủ", page: "Trang", notFound: "Không tìm thấy trang", archive: "Lưu trữ cho %s", search: "Kết quả tìm kiếm cho %s",
