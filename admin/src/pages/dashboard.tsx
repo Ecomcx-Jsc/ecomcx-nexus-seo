@@ -1,4 +1,4 @@
-import { Button, Card, PageHeader, Switch, can, useApi } from "@ecomcx/nexus-admin-sdk";
+import { Button, Card, PageHeader, Switch, can, useApi } from "@ecomcx/ecomweb-admin-sdk";
 import { API, Loading, ScoreBadge, useSeoSettings } from "../ui";
 import { t } from "../i18n";
 

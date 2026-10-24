@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Card, Input, Modal, PageHeader, Select, Textarea, useApi } from "@ecomcx/nexus-admin-sdk";
+import { Button, Card, Input, Modal, PageHeader, Select, Textarea, useApi } from "@ecomcx/ecomweb-admin-sdk";
 import { BUSINESS_TYPES, schemaDef } from "../../../frontend/lib/schema-types";
 import type { SchemaTemplate } from "../../../frontend/lib/settings";
 import { SchemaCatalog, SchemaForm, newId } from "../schema-editor";

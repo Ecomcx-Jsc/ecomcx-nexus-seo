@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Field, Input, Modal, Select, Textarea } from "@ecomcx/nexus-admin-sdk";
+import { Button, Field, Input, Modal, Select, Textarea } from "@ecomcx/ecomweb-admin-sdk";
 import { SCHEMA_TYPES, schemaDef, type SchemaField } from "../../frontend/lib/schema-types";
 import { Icon, ImageField } from "./ui";
 import { t } from "./i18n";

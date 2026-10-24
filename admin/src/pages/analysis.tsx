@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Button, Card, EmptyState, Input, PageHeader, Select, Tabs, api, notify, useApi } from "@ecomcx/nexus-admin-sdk";
+import { Button, Card, EmptyState, Input, PageHeader, Select, Tabs, api, notify, useApi } from "@ecomcx/ecomweb-admin-sdk";
 import { API, Hint, Icon, Loading, ScoreBadge, StatusIcon } from "../ui";
 import { useHashTab } from "./titles";
 import { t } from "../i18n";

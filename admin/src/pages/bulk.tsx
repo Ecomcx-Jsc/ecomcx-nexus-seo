@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Card, Checkbox, EmptyState, Input, PageHeader, Select, Textarea, api, notify, useApi } from "@ecomcx/nexus-admin-sdk";
+import { Button, Card, Checkbox, EmptyState, Input, PageHeader, Select, Textarea, api, notify, useApi } from "@ecomcx/ecomweb-admin-sdk";
 import { META_KEY, type PostSeo } from "../../../frontend/lib/settings";
 import { Counter, Loading, ScoreBadge, useContentTypes } from "../ui";
 import { t } from "../i18n";

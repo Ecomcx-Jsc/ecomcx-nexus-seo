@@ -1,5 +1,5 @@
 // File ở gốc website do plugin phục vụ (khai báo trong plugin.json → frontend.routes).
-import { getPosts, pluginFetch, type Post, type Site } from "@ecomcx/nexus-theme-sdk";
+import { getPosts, pluginFetch, type Post, type Site } from "@ecomcx/ecomweb-theme-sdk";
 import { seoSettings } from "./lib/page";
 import type { PostSeo } from "./lib/settings";
 import { extract, stripTags, youtubeEmbed, youtubeThumb } from "./lib/text";

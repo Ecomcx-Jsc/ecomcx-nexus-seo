@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Badge, Button, Checkbox, Field, Input, MediaPicker, Select, Spinner, Tabs, Textarea, api, notify, useApi } from "@ecomcx/nexus-admin-sdk";
+import { Badge, Button, Checkbox, Field, Input, MediaPicker, Select, Spinner, Tabs, Textarea, api, notify, useApi } from "@ecomcx/ecomweb-admin-sdk";
 import type { ImageRef, Robots, SeoSettings } from "../../frontend/lib/settings";
 import { VARIABLES } from "../../frontend/lib/vars";
 import { t } from "./i18n";

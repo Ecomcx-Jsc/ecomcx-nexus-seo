@@ -1,4 +1,4 @@
-import { definePlugin, type Block, type DocumentMetadata, type ShortcodeProps, type Site, type SlotProps } from "@ecomcx/nexus-theme-sdk";
+import { definePlugin, type Block, type DocumentMetadata, type ShortcodeProps, type Site, type SlotProps } from "@ecomcx/ecomweb-theme-sdk";
 import { Breadcrumbs, ContactInfo, Faq, HtmlSitemap, Toc } from "./components";
 import { ogLocale, pageSeo, seoSettings } from "./lib/page";
 import { buildGraph } from "./lib/schema";
@@ -14,7 +14,7 @@ const safeJson = (v: unknown) => JSON.stringify(v).replace(/</g, "\\u003c").repl
 
 // ------------------------------------------------------------------ metadata của trang
 
-async function metadata(meta: DocumentMetadata, { site, data }: Parameters<NonNullable<import("@ecomcx/nexus-theme-sdk").FilterMap["document.metadata"]>>[1]): Promise<DocumentMetadata> {
+async function metadata(meta: DocumentMetadata, { site, data }: Parameters<NonNullable<import("@ecomcx/ecomweb-theme-sdk").FilterMap["document.metadata"]>>[1]): Promise<DocumentMetadata> {
   const seo = await pageSeo(site, data);
   if (!seo) return meta;
   const s = seo.settings;

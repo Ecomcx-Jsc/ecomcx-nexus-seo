@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Badge, Button, Card, Checkbox, EmptyState, Field, Input, Modal, PageHeader, Select, Tabs, Textarea, api, notify, useApi } from "@ecomcx/nexus-admin-sdk";
+import { Badge, Button, Card, Checkbox, EmptyState, Field, Input, Modal, PageHeader, Select, Tabs, Textarea, api, notify, useApi } from "@ecomcx/ecomweb-admin-sdk";
 import { API, Icon, Loading } from "../ui";
 import { t } from "../i18n";
 

@@ -1,4 +1,4 @@
-import { getPosts, getTerms, Link, type Post, type ShortcodeProps, type Site } from "@ecomcx/nexus-theme-sdk";
+import { getPosts, getTerms, Link, type Post, type ShortcodeProps, type Site } from "@ecomcx/ecomweb-theme-sdk";
 import { seoSettings } from "./lib/page";
 import type { PostSeo } from "./lib/settings";
 import { extract, fold } from "./lib/text";

@@ -7,8 +7,8 @@
     "typecheck": "tsc --noEmit -p ."
   },
   "devDependencies": {
-    "@ecomcx/nexus-admin-sdk": "^1.24.1",
-    "@ecomcx/nexus-theme-sdk": "^1.24.1",
+    "@ecomcx/ecomweb-admin-sdk": "^1.25.0",
+    "@ecomcx/ecomweb-theme-sdk": "^1.25.0",
     "@types/react": "^19",
     "typescript": "5.9.3"
   }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Badge, Button, Card, Checkbox, Input, PageHeader, Select, Table, Textarea, api, notify, useApi } from "@ecomcx/nexus-admin-sdk";
+import { Badge, Button, Card, Checkbox, Input, PageHeader, Select, Table, Textarea, api, notify, useApi } from "@ecomcx/ecomweb-admin-sdk";
 import { Hint, Icon, LinesInput, Loading, Row, SettingsShell, API, useContentTypes, useSeoSettings } from "../ui";
 import { useHashTab } from "./titles";
 import { t } from "../i18n";

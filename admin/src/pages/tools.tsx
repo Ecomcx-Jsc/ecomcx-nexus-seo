@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Button, Card, PageHeader, api, notify, useApi } from "@ecomcx/nexus-admin-sdk";
+import { Button, Card, PageHeader, api, notify, useApi } from "@ecomcx/ecomweb-admin-sdk";
 import { API, Hint } from "../ui";
 import { t } from "../i18n";
 
